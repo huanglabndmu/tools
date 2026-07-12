@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huang Lab - Rodent Age Calculator</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fcfcfd;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(255, 204, 213, 0.6) 0%, transparent 40%),
+                radial-gradient(circle at 85% 15%, rgba(255, 243, 204, 0.7) 0%, transparent 35%),
+                radial-gradient(circle at 80% 80%, rgba(204, 235, 255, 0.6) 0%, transparent 45%),
+                radial-gradient(circle at 20% 90%, rgba(224, 240, 255, 0.5) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .card-container {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
+        }
+
+        .lab-title {
+            color: #0b5394;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        h1 { 
+            color: #1a202c; 
+            font-size: 1.6rem;
+            margin-top: 0;
+            margin-bottom: 22px;
+            text-align: center;
+        }
+
+        .solve-hint {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #4a5568;
+            background: rgba(56, 178, 172, 0.08);
+            border: 1px dashed rgba(56, 178, 172, 0.5);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .input-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: none;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #319795;
+            background: rgba(56, 178, 172, 0.14);
+            padding: 2px 9px;
+            border-radius: 20px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        .badge.show { display: inline-block; }
+
+        .input-row { display: flex; gap: 10px; align-items: center; }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            outline: none;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        input:focus { border-color: #38b2ac; }
+
+        input.solving {
+            border-color: #38b2ac;
+            border-style: dashed;
+            background: rgba(56, 178, 172, 0.07);
+        }
+
+        .unit-label { font-weight: 600; color: #718096; }
+
+        .today-btn {
+            flex: 0 0 auto;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2b6cb0;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .today-btn:hover { background: #ebf8ff; border-color: #38b2ac; }
+        .today-btn:active { transform: translateY(1px); }
+
+        #calcBtn { 
+            width: 100%;
+            padding: 15px; 
+            font-size: 1.2rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            background-color: #38b2ac; 
+            color: white; 
+            border: none; 
+            border-radius: 15px; 
+            box-shadow: 0 6px 12px rgba(56, 178, 172, 0.25);
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        #calcBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(56, 178, 172, 0.35);
+            background-color: #319795;
+        }
+
+        #calcBtn:active { transform: translateY(1px); }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(247, 250, 252, 0.8);
+            border-left: 5px solid #38b2ac;
+            display: none; 
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .headline {
+            font-size: 1.25rem;
+            color: #2b6cb0;
+            font-weight: 800;
+            margin: 2px 0 14px 0;
+            line-height: 1.5;
+        }
+
+        .recipe-item {
+            font-size: 1.05rem;
+            color: #4a5568;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .sub-note {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 10px;
+        }
+
+        .weekend-note {
+            font-size: 0.9rem;
+            color: #9c4221;
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+        
+        .error-message {
+            color: #e53e3e;
+            font-weight: 600;
+            background: #fff5f5;
+            border-left: 5px solid #e53e3e;
+        }
+
+        .footer {
+            margin-top: 25px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(203, 213, 224, 0.5);
+            font-size: 0.72rem;
+            color: #a0aec0;
+            letter-spacing: 0.5px;
+            text-align: center;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div class="lab-title">Huang Lab Tools</div>
+        <h1>Rodent Age Calculator</h1>
+
+        <div class="solve-hint">
+            Fill in any <strong>two</strong> — leave one blank and it's solved automatically.
+            <br><span style="font-size:0.82rem; color:#718096;">Birth Date + Age = Experiment Date</span>
+        </div>
+
+        <div class="input-group">
+            <label>Birth Date <span class="badge" id="badge_birth">will solve</span></label>
+            <div class="input-row">
+                <input type="date" id="birth">
+                <button type="button" class="today-btn" data-target="birth">Today</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Age at Experiment <span class="badge" id="badge_age">will solve</span></label>
+            <div class="input-row">
+                <input type="number" id="weeks" placeholder="0" min="0" step="1">
+                <span class="unit-label">Weeks</span>
+                <input type="number" id="days" placeholder="0" min="0" max="6" step="1">
+                <span class="unit-label">Days</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Experiment Date <span class="badge" id="badge_exp">will solve</span></label>
+            <div class="input-row">
+                <input type="date" id="exp">
+                <button type="button" class="today-btn" data-target="exp">Today</button>
+            </div>
+        </div>
+
+        <button id="calcBtn">Calculate</button>
+        <div id="resultBox" class="result-box"></div>
+
+        <div class="footer">
+            Designed &amp; Developed by Ying-Jie Chen &nbsp;·&nbsp; Huang Lab, NDMU
+        </div>
+    </div>
+
+    <script>
+        const SLOTS = ['birth', 'age', 'exp'];
+        const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        const birthI = document.getElementById('birth');
+        const weeksI = document.getElementById('weeks');
+        const daysI = document.getElementById('days');
+        const expI = document.getElementById('exp');
+        const resultBox = document.getElementById('resultBox');
+
+        /* ---------- date helpers (all DST-safe: local midnight) ---------- */
+        function parseDateSafely(dateStr) {
+            if (!dateStr) return null;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+        function formatDate(o) {
+            const y = o.getFullYear();
+            const m = String(o.getMonth() + 1).padStart(2, '0');
+            const d = String(o.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        function addDays(o, n) {
+            const r = new Date(o.getFullYear(), o.getMonth(), o.getDate());
+            r.setDate(r.getDate() + n);
+            return r;
+        }
+        function diffInDays(a, b) {
+            const ua = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+            const ub = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+            return Math.round((ub - ua) / 86400000);
+        }
+        function weekdayName(o) { return WEEKDAYS[o.getDay()]; }
+        function isWeekend(o) { const g = o.getDay(); return g === 0 || g === 6; }
+        function weekendNoteHtml(o, label) {
+            return isWeekend(o)
+                ? `<div class="weekend-note">⚠️ ${label} falls on a <strong>weekend</strong> (${weekdayName(o)}).</div>`
+                : '';
+        }
+
+        /* ---------- 哪個 slot 已填 ---------- */
+        function slotFilled(slot) {
+            if (slot === 'birth') return birthI.value !== '';
+            if (slot === 'exp')   return expI.value !== '';
+            return weeksI.value !== '' || daysI.value !== ''; // age
+        }
+
+        /* ---------- 即時標記待解的那格 ---------- */
+        function refreshTarget() {
+            [birthI, weeksI, daysI, expI].forEach(el => el.classList.remove('solving'));
+            SLOTS.forEach(s => document.getElementById('badge_' + s).classList.remove('show'));
+
+            const missing = SLOTS.filter(s => !slotFilled(s));
+            if (missing.length === 1) {
+                const s = missing[0];
+                document.getElementById('badge_' + s).classList.add('show');
+                if (s === 'birth') birthI.classList.add('solving');
+                else if (s === 'exp') expI.classList.add('solving');
+                else { weeksI.classList.add('solving'); daysI.classList.add('solving'); }
+            }
+        }
+
+        [birthI, weeksI, daysI, expI].forEach(el => el.addEventListener('input', refreshTarget));
+
+        document.querySelectorAll('.today-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById(btn.dataset.target).value = new Date().toLocaleDateString('en-CA');
+                refreshTarget();
+            });
+        });
+
+        document.getElementById('calcBtn').addEventListener('click', calculate);
+        [birthI, weeksI, daysI, expI].forEach(el => {
+            el.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+        });
+
+        /* ---------- 計算 ---------- */
+        function calculate() {
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box';
+
+            const missing = SLOTS.filter(s => !slotFilled(s));
+            if (missing.length === 0) {
+                showError("You've filled in all three. Clear the <strong>one</strong> value you want me to solve for.");
+                return;
+            }
+            if (missing.length > 1) {
+                showError("Please fill in <strong>two</strong> fields and leave one blank.");
+                return;
+            }
+            const target = missing[0];
+
+            const birth = birthI.value ? parseDateSafely(birthI.value) : null;
+            const exp = expI.value ? parseDateSafely(expI.value) : null;
+            let w = parseInt(weeksI.value, 10); if (isNaN(w) || w < 0) w = 0;
+            let d = parseInt(daysI.value, 10); if (isNaN(d) || d < 0) d = 0;
+            let totalDays = w * 7 + d;
+
+            let B = birth, E = exp, TD = totalDays;
+
+            if (target === 'exp') {
+                E = addDays(birth, totalDays);
+            } else if (target === 'birth') {
+                B = addDays(exp, -totalDays);
+            } else { // 解 age
+                if (birth > exp) { showError("Birth date can't be after the experiment date."); return; }
+                TD = diffInDays(birth, exp);
+            }
+
+            const nw = Math.floor(TD / 7), nd = TD % 7;
+            const ageStr = `${nw}W ${nd}D`;
+            const solvedLabel = {
+                birth: `Birth Date: ${formatDate(B)} (${weekdayName(B)})`,
+                exp:   `Experiment Date: ${formatDate(E)} (${weekdayName(E)})`,
+                age:   `Age: ${nw} Weeks ${nd} Days`
+            }[target];
+
+            let weekendNote = '';
+            if (target === 'exp') weekendNote = weekendNoteHtml(E, 'Experiment date');
+            else if (target === 'birth') weekendNote = weekendNoteHtml(B, 'Birth date');
+
+            resultBox.innerHTML = `
+                <div class="result-title">🐭 Result</div>
+                <div class="headline">${solvedLabel}</div>
+                <div class="recipe-item">A rodent born <strong>${formatDate(B)}</strong> (${weekdayName(B)}) is <strong>${ageStr}</strong> old on <strong>${formatDate(E)}</strong> (${weekdayName(E)}).</div>
+                <div class="sub-note">Postnatal day <strong>P${TD}</strong> &nbsp;·&nbsp; ${TD} days total.</div>
+                ${weekendNote}
+            `;
+        }
+
+        function showError(msg) {
+            resultBox.innerHTML = `⚠️ ${msg}`;
+            resultBox.className = 'result-box error-message';
+        }
+    </script>
+</body>
+</html>
