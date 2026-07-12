@@ -59,7 +59,6 @@
             margin-bottom: 40px;
         }
 
-        /* 工具選單的網格排版 */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -67,7 +66,6 @@
             margin-top: 20px;
         }
 
-        /* 單個工具的按鈕卡片設計 */
         .tool-card {
             display: flex;
             flex-direction: column;
@@ -75,7 +73,7 @@
             padding: 30px 20px;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 20px;
-            text-decoration: none; /* 移除超連結底線 */
+            text-decoration: none;
             color: #2d3748;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
@@ -105,12 +103,22 @@
             color: #4a5568;
             line-height: 1.5;
         }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(203, 213, 224, 0.5);
+            font-size: 0.78rem;
+            color: #a0aec0;
+            letter-spacing: 0.5px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
 
     <div class="card-container">
-        <div class="lab-title">Graduate Institute of Pharmacology, NDMU</div>
+        <div class="lab-title">Graduate Institute of Pharmacology, NDMC</div>
         <h1>Huang Lab Tools</h1>
         <div class="subtitle">Select a tool to launch in a new window 🚀</div>
 
@@ -118,14 +126,18 @@
             <a href="timer.html" target="_blank" class="tool-card">
                 <div class="tool-icon">⏱️</div>
                 <div class="tool-title">Interval Timer</div>
-                <div class="tool-desc">30-min countdown with automated 5-minute beep alerts for precise experiments.</div>
+                <div class="tool-desc">Customizable countdown with interval beep alerts, auto-loop, screen wake lock, and live tab-title display.</div>
             </a>
 
             <a href="dilution.html" target="_blank" class="tool-card">
                 <div class="tool-icon">🧪</div>
                 <div class="tool-title">Universal Calculator</div>
-                <div class="tool-desc">Dual-mode calculator for liquid dilutions and solid powder precision weighting.</div>
+                <div class="tool-desc">C₁V₁ = C₂V₂ solver — fill any three, solve the fourth. Solid mode included. Molar ⇄ mass auto-conversion.</div>
             </a>
+        </div>
+
+        <div class="footer">
+            Designed &amp; Developed by Ying-Jie Chen &nbsp;·&nbsp; All rights reserved.
         </div>
     </div>
 
