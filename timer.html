@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huang Lab Tools - Interval Timer</title>
+    <title>Huang Lab - Interval Timer</title>
     <style>
-        /* 糖果色暈染泡泡背景 */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            height: 100vh; 
+            min-height: 100vh; 
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
             background-color: #fcfcfd;
             background-image: 
                 radial-gradient(circle at 15% 10%, rgba(255, 204, 213, 0.6) 0%, transparent 40%),
@@ -23,74 +24,183 @@
             background-attachment: fixed;
         }
 
-        /* 實驗室專屬小工具容器 (毛玻璃卡片特效) */
         .card-container {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 50px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 50px 40px;
             border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 1);
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        /* 標題設計 */
         .lab-title {
-            color: #0b5394; /* 呼應老闆網頁上的深藍色字體 */
+            color: #0b5394;
             font-weight: 800;
             letter-spacing: 2px;
             text-transform: uppercase;
             font-size: 1.1rem;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
-        h1 { 
-            color: #1a202c; 
-            font-size: 1.8rem;
-            margin-top: 0;
-            margin-bottom: 30px;
+        
+        h1 { color: #1a202c; font-size: 2rem; margin-top: 0; margin-bottom: 26px; }
+
+        /* 設定區 */
+        .settings {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .setting-group { flex: 1; max-width: 170px; text-align: left; }
+        .setting-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 6px;
+        }
+        .input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            padding: 0 12px;
+            transition: border-color 0.2s;
+        }
+        .input-wrap:focus-within { border-color: #38b2ac; }
+        .settings input {
+            width: 100%;
+            padding: 10px 0;
+            border: none;
+            background: transparent;
+            font-size: 1.05rem;
+            text-align: center;
+            outline: none;
+            min-width: 0;
+            color: #2d3748;
+        }
+        .unit-label { font-size: 0.85rem; color: #718096; font-weight: 600; }
+        .input-wrap.disabled { background: #edf2f7; border-color: #edf2f7; }
+        .input-wrap.disabled input { color: #a0aec0; cursor: not-allowed; }
+
+        /* 循環開關 */
+        .loop-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: #cbd5e0; border-radius: 26px; transition: 0.3s;
+        }
+        .slider:before {
+            content: ""; position: absolute;
+            height: 20px; width: 20px; left: 3px; top: 3px;
+            background: white; border-radius: 50%; transition: 0.3s;
+        }
+        .switch input:checked + .slider { background: #38b2ac; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+
+        /* 循環週期標示 */
+        .cycle-caption {
+            display: none;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #319795;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
         }
 
-        /* 時間顯示器 */
-        #display { 
-            font-size: 6rem; 
-            font-weight: 700; 
-            color: #2d3748; 
-            margin-bottom: 40px;
-            font-variant-numeric: tabular-nums; /* 讓數字寬度固定，跳動時才不會左右晃 */
+        @keyframes pulseFlash {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.06); color: #38b2ac; }
+            100% { transform: scale(1); }
+        }
+        .timer-display.flash { animation: pulseFlash 0.5s ease; }
+
+        /* 計時器數字本體 */
+        .timer-display {
+            font-size: 5.5rem;
+            font-weight: 800;
+            color: #2b6cb0;
+            font-variant-numeric: tabular-nums;
+            margin: 20px 0;
+            text-shadow: 2px 4px 10px rgba(43, 108, 176, 0.2);
+            letter-spacing: 2px;
         }
 
-        /* 超大顆的控制按鈕 */
-        button { 
-            padding: 20px 60px; 
-            font-size: 1.8rem; 
+        /* 狀態提示標籤 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ebf8ff;
+            color: #2b6cb0;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
             font-weight: bold;
-            cursor: pointer; 
-            background-color: #38b2ac; /* 初始設定為漂亮的湖水綠 */
-            color: white; 
-            border: none; 
-            border-radius: 50px; 
-            box-shadow: 0 8px 15px rgba(56, 178, 172, 0.3);
-            transition: all 0.3s ease; /* 讓顏色變換有柔和的過場動畫 */
-        }
-        
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        button:active {
-            transform: translateY(1px);
+            margin-bottom: 20px;
+            border: 1px solid #bee3f8;
+            transition: all 0.3s ease;
         }
 
-        /* 用來改變按鈕狀態的 class */
-        .btn-pause {
-            background-color: #e53e3e !important; /* 暫停時變成警示的紅色 */
-            box-shadow: 0 8px 15px rgba(229, 62, 62, 0.3) !important;
+        .status-badge.active {
+            background: #c6f6d5;
+            color: #22543d;
+            border-color: #9ae6b4;
         }
-        .btn-resume {
-            background-color: #dd6b20 !important; /* 繼續時變成活力橘色 */
-            box-shadow: 0 8px 15px rgba(221, 107, 32, 0.3) !important;
+
+        .status-badge.warning {
+            background: #fed7d7;
+            color: #822727;
+            border-color: #feb2b2;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-start { background-color: #38b2ac; color: white; flex: 1;}
+        .btn-start:hover { background-color: #319795; transform: translateY(-2px); }
+        .btn-start:active { transform: translateY(1px); }
+
+        .btn-reset { background-color: #e2e8f0; color: #4a5568; }
+        .btn-reset:hover { background-color: #cbd5e0; transform: translateY(-2px); }
+        .btn-reset:active { transform: translateY(1px); }
+        
+        .info-text {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #718096;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -98,97 +208,366 @@
 
     <div class="card-container">
         <div class="lab-title">Huang Lab Tools</div>
-        <h1>30-Min Interval Timer</h1>
+        <h1>Interval Timer</h1>
+
+        <div class="settings" id="settings">
+            <div class="setting-group">
+                <label for="totalInput">Total Duration</label>
+                <div class="input-wrap" id="totalWrap">
+                    <input type="number" id="totalInput" value="30" min="0.1" step="any" inputmode="decimal">
+                    <span class="unit-label">min</span>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label for="intervalInput">Beep Every</label>
+                <div class="input-wrap" id="intervalWrap">
+                    <input type="number" id="intervalInput" value="5" min="0" step="any" inputmode="decimal">
+                    <span class="unit-label">min</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="loop-row">
+            <span>🔁 Loop (repeat cycles)</span>
+            <label class="switch">
+                <input type="checkbox" id="loopToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
         
-        <div id="display">30:00</div>
-        
-        <button id="actionBtn">Start</button>
+        <div class="status-badge" id="wakeLockStatus">
+            📱 Screen Sleep: Allowed
+        </div>
+
+        <div class="cycle-caption" id="cycleCaption"></div>
+
+        <div class="timer-display" id="timeDisplay">30:00</div>
+
+        <div class="controls">
+            <button class="btn-reset" id="resetBtn">Reset</button>
+            <button class="btn-start" id="startBtn">▶ Start</button>
+        </div>
+
+        <div class="info-text" id="infoText"></div>
     </div>
 
     <script>
-        const totalTime = 30 * 60; 
-        const intervalTime = 5 * 60; 
-        let timeRemaining = totalTime;
-        let timer;
-        let isRunning = false; // 記錄目前是否正在計時中
-        let audioCtx;
+        // 預設：總時間 30 分鐘，每 5 分鐘嗶一次（可由上方欄位自訂）
+        let TOTAL_SECONDS = 30 * 60;
+        let ALERT_INTERVAL = 5 * 60;   // 0 = 不發間隔嗶聲，只在結束時響
+        
+        let timeRemaining = TOTAL_SECONDS;
+        let isRunning = false;
+        let hasStarted = false;        // 一次計時階段是否已開始（區分「開始」與「繼續」）
+        let timerInterval = null;
+        
+        // 絕對時間校準變數
+        let expectedEndTime = null;
+        let lastAlertedInterval = 0;
 
-        const display = document.getElementById('display');
-        const actionBtn = document.getElementById('actionBtn');
+        // DOM 元素
+        const timeDisplay = document.getElementById('timeDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const wakeLockStatus = document.getElementById('wakeLockStatus');
+        const totalInput = document.getElementById('totalInput');
+        const intervalInput = document.getElementById('intervalInput');
+        const totalWrap = document.getElementById('totalWrap');
+        const intervalWrap = document.getElementById('intervalWrap');
+        const infoText = document.getElementById('infoText');
+        const loopToggle = document.getElementById('loopToggle');
+        const cycleCaption = document.getElementById('cycleCaption');
 
-        // 初始化音效 (確保瀏覽器允許發聲)
-        function initAudio() {
+        const DEFAULT_TITLE = 'Huang Lab - Interval Timer';
+        let cycleCount = 0;
+
+        // ==========================================
+        // 設定：讀取欄位 → 秒數
+        // ==========================================
+        function applySettings() {
+            const totalMin = parseFloat(totalInput.value);
+            const intMin = parseFloat(intervalInput.value);
+            if (isNaN(totalMin) || totalMin <= 0) return false;   // 總時長必填且為正
+            TOTAL_SECONDS = Math.round(totalMin * 60);
+            ALERT_INTERVAL = (isNaN(intMin) || intMin <= 0) ? 0 : Math.round(intMin * 60);
+            return true;
+        }
+
+        function fmtMin(x) { return Number(x.toFixed(2)).toString(); }
+
+        // 分頁標題即時倒數（切到別的分頁也看得到）
+        function setTitle() {
+            if (!hasStarted) { document.title = DEFAULT_TITLE; return; }
+            const t = timeDisplay.textContent;
+            document.title = (isRunning ? `⏱ ${t} · ` : `⏸ ${t} (paused) · `) + DEFAULT_TITLE;
+        }
+
+        // 循環週期標示
+        function updateCycleCaption() {
+            if (hasStarted && loopToggle.checked) {
+                cycleCaption.textContent = `🔁 Cycle ${cycleCount}`;
+                cycleCaption.style.display = 'block';
+            } else {
+                cycleCaption.style.display = 'none';
+            }
+        }
+
+        // 進入新一輪時的視覺脈衝
+        function flashTimer() {
+            timeDisplay.classList.remove('flash');
+            void timeDisplay.offsetWidth; // 強制 reflow 以重播動畫
+            timeDisplay.classList.add('flash');
+        }
+
+        loopToggle.addEventListener('change', updateCycleCaption);
+
+        function updateInfoText() {
+            const totalMin = fmtMin(TOTAL_SECONDS / 60);
+            let intervalPart;
+            if (ALERT_INTERVAL > 0) {
+                intervalPart = `A short double-beep sounds every <strong>${fmtMin(ALERT_INTERVAL / 60)} min</strong>.`;
+            } else {
+                intervalPart = `A single alarm sounds only at the end.`;
+            }
+            infoText.innerHTML = `💡 <strong>Pro Tip:</strong> ${totalMin}-min total. ${intervalPart} Keep this tab active for accuracy. <strong>The screen stays ON automatically while running.</strong>`;
+        }
+
+        // 閒置時（尚未開始）即時把欄位變動反映到顯示上
+        function refreshIdle() {
+            if (hasStarted) return;
+            if (applySettings()) {
+                timeRemaining = TOTAL_SECONDS;
+                lastAlertedInterval = 0;
+                updateDisplay(timeRemaining);
+                updateInfoText();
+                if (wakeLockStatus.className.includes('warning')) {
+                    wakeLockStatus.innerHTML = '📱 Screen Sleep: Allowed';
+                    wakeLockStatus.className = 'status-badge';
+                }
+            }
+        }
+
+        function setInputsDisabled(state) {
+            totalInput.disabled = state;
+            intervalInput.disabled = state;
+            totalWrap.classList.toggle('disabled', state);
+            intervalWrap.classList.toggle('disabled', state);
+        }
+
+        totalInput.addEventListener('input', refreshIdle);
+        intervalInput.addEventListener('input', refreshIdle);
+
+        // ==========================================
+        // Wake Lock API (螢幕強制喚醒)
+        // ==========================================
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLockStatus.innerHTML = '✨ Screen Sleep: DISABLED (Safe Mode)';
+                    wakeLockStatus.className = 'status-badge active';
+                    
+                    wakeLock.addEventListener('release', () => {
+                        wakeLockStatus.innerHTML = '📱 Screen Sleep: Allowed';
+                        wakeLockStatus.className = 'status-badge warning';
+                    });
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                    wakeLockStatus.innerHTML = '⚠️ Screen lock not supported on this browser';
+                    wakeLockStatus.className = 'status-badge warning';
+                }
+            } else {
+                wakeLockStatus.innerHTML = '⚠️ Screen lock API not supported';
+                wakeLockStatus.className = 'status-badge warning';
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+
+        // 切換 App 再切回來時，若仍在計時則重新啟動 Wake Lock
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && isRunning) {
+                await requestWakeLock();
+            }
+        });
+
+        // ==========================================
+        // 聲音引擎：Web Audio API
+        // ==========================================
+        let audioCtx = null;
+        function ensureAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        // 發出「逼」聲的函數
-        function playBeep() {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            osc.type = 'sine'; 
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime); 
-            osc.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5); 
-        }
-
-        // 更新畫面時間
-        function updateDisplay(seconds) {
-            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            display.textContent = `${mins}:${secs}`;
-        }
-
-        // 核心邏輯：控制 開始/暫停/繼續
-        actionBtn.addEventListener('click', () => {
-            initAudio(); // 每次點擊都確保音效引擎醒著
-
-            if (isRunning) {
-                // 如果正在計時 -> 執行「暫停」邏輯
-                clearInterval(timer);
-                isRunning = false;
-                actionBtn.textContent = 'Resume'; // 按鈕文字變成繼續
-                actionBtn.className = 'btn-resume'; // 換成橘色
+        function playBeep(type = 'short') {
+            ensureAudio();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            
+            if (type === 'short') {
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                oscillator.stop(audioCtx.currentTime + 0.1);
                 
-            } else {
-                // 如果停止或暫停中 -> 執行「開始」或「繼續」邏輯
-                isRunning = true;
-                actionBtn.textContent = 'Pause'; // 按鈕文字變成暫停
-                actionBtn.className = 'btn-pause'; // 換成紅色
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    gain2.gain.setValueAtTime(1, audioCtx.currentTime);
+                    osc2.start();
+                    gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc2.stop(audioCtx.currentTime + 0.3);
+                }, 150);
 
-                timer = setInterval(() => {
-                    timeRemaining--;
-                    updateDisplay(timeRemaining);
-
-                    // 每 5 分鐘響鈴 (過濾掉 0 秒)
-                    if (timeRemaining > 0 && timeRemaining % intervalTime === 0) {
-                        playBeep();
-                    }
-
-                    // 倒數結束
-                    if (timeRemaining <= 0) {
-                        clearInterval(timer);
-                        isRunning = false;
-                        
-                        // 結束時連逼三聲
-                        playBeep();
-                        setTimeout(playBeep, 600); 
-                        setTimeout(playBeep, 1200);
-                        
-                        // 重置為初始狀態
-                        actionBtn.textContent = 'Start';
-                        actionBtn.className = ''; // 恢復原本的湖水綠
-                        timeRemaining = totalTime;
-                        setTimeout(() => updateDisplay(timeRemaining), 2000);
-                    }
-                }, 1000);
+            } else if (type === 'end') {
+                oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+                gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+                oscillator.stop(audioCtx.currentTime + 1.5);
             }
-        });
+        }
+
+        // ==========================================
+        // 計時器核心 (絕對時間校準)
+        // ==========================================
+        function updateDisplay(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            timeDisplay.textContent = `${m}:${s}`;
+        }
+
+        function checkIntervalBeep(currentSeconds) {
+            if (ALERT_INTERVAL <= 0) return;   // 未設間隔 → 不發間隔嗶聲
+            const elapsed = TOTAL_SECONDS - currentSeconds;
+            const currentInterval = Math.floor(elapsed / ALERT_INTERVAL);
+            // 跨入新的區間，且尚未到結束（結束由 'end' 長音負責）
+            if (currentInterval > lastAlertedInterval && currentSeconds > 0) {
+                playBeep('short');
+                lastAlertedInterval = currentInterval;
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) {
+                // 暫停
+                isRunning = false;
+                clearInterval(timerInterval);
+                startBtn.innerHTML = "▶ Resume";
+                startBtn.style.backgroundColor = "#ed8936";
+                releaseWakeLock();
+                setTitle();
+            } else {
+                // 全新開始：套用並鎖定設定
+                if (!hasStarted) {
+                    if (!applySettings()) {
+                        wakeLockStatus.innerHTML = '⚠️ Enter a valid Total Duration (min)';
+                        wakeLockStatus.className = 'status-badge warning';
+                        return;
+                    }
+                    timeRemaining = TOTAL_SECONDS;
+                    lastAlertedInterval = 0;
+                    updateInfoText();
+                    setInputsDisabled(true);
+                    hasStarted = true;
+                    cycleCount = 1;
+                    updateCycleCaption();
+                }
+
+                isRunning = true;
+                startBtn.innerHTML = "⏸ Pause";
+                startBtn.style.backgroundColor = "#e53e3e";
+                
+                requestWakeLock();
+                ensureAudio();   // 突破 iOS 靜音 / 自動播放限制
+
+                // 核心：以絕對結束時間推算，抗背景降速
+                expectedEndTime = Date.now() + (timeRemaining * 1000);
+
+                timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    timeRemaining = Math.max(0, Math.ceil((expectedEndTime - now) / 1000));
+                    updateDisplay(timeRemaining);
+                    setTitle();
+                    checkIntervalBeep(timeRemaining);
+
+                    if (timeRemaining <= 0) {
+                        playBeep('end');
+
+                        if (loopToggle.checked) {
+                            // 循環模式：進入下一輪，不停止
+                            cycleCount++;
+                            updateCycleCaption();
+                            flashTimer();
+                            lastAlertedInterval = 0;
+                            timeRemaining = TOTAL_SECONDS;
+                            expectedEndTime = Date.now() + (TOTAL_SECONDS * 1000);
+                            updateDisplay(timeRemaining);
+                            setTitle();
+                        } else {
+                            // 一般模式：停止
+                            clearInterval(timerInterval);
+                            isRunning = false;
+                            hasStarted = false;
+                            timeDisplay.textContent = "00:00";
+                            document.title = "✅ Done! · " + DEFAULT_TITLE;
+                            startBtn.innerHTML = "▶ Start";
+                            startBtn.style.backgroundColor = "#38b2ac";
+                            setInputsDisabled(false);
+                            updateCycleCaption();
+                            releaseWakeLock();
+                            setTimeout(() => alert("⏰ Time's up! Experiment finished!"), 100);
+                        }
+                    }
+                }, 200);
+            }
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            hasStarted = false;
+            cycleCount = 0;
+            clearInterval(timerInterval);
+            setInputsDisabled(false);
+            applySettings();
+            timeRemaining = TOTAL_SECONDS;
+            lastAlertedInterval = 0;
+            updateDisplay(timeRemaining);
+            updateInfoText();
+            updateCycleCaption();
+            document.title = DEFAULT_TITLE;
+            startBtn.innerHTML = "▶ Start";
+            startBtn.style.backgroundColor = "#38b2ac";
+            releaseWakeLock();
+            wakeLockStatus.innerHTML = '📱 Screen Sleep: Allowed';
+            wakeLockStatus.className = 'status-badge';
+        }
+
+        startBtn.addEventListener('click', startTimer);
+        resetBtn.addEventListener('click', resetTimer);
+
+        // 初始化
+        applySettings();
+        updateDisplay(TOTAL_SECONDS);
+        updateInfoText();
     </script>
 </body>
 </html>
