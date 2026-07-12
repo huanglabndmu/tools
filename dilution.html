@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huang Lab Tools - Super Universal Calculator</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fcfcfd;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(255, 204, 213, 0.6) 0%, transparent 40%),
+                radial-gradient(circle at 85% 15%, rgba(255, 243, 204, 0.7) 0%, transparent 35%),
+                radial-gradient(circle at 80% 80%, rgba(204, 235, 255, 0.6) 0%, transparent 45%),
+                radial-gradient(circle at 20% 90%, rgba(224, 240, 255, 0.5) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .card-container {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
+        }
+
+        .lab-title {
+            color: #0b5394;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        h1 { 
+            color: #1a202c; 
+            font-size: 1.6rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .mode-switch {
+            display: flex;
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #718096;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #2b6cb0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 反算模式的子切換 */
+        .sub-switch {
+            display: none; /* JS 於 reverse 模式改為 flex */
+            background: rgba(226, 232, 240, 0.45);
+            border-radius: 12px;
+            padding: 4px;
+            margin-top: -6px;
+            margin-bottom: 22px;
+        }
+        .sub-btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: #718096;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        .sub-btn.active {
+            background: white;
+            color: #2b6cb0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .input-row { display: flex; gap: 10px; }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            outline: none;
+            transition: border-color 0.2s;
+            min-width: 0;
+        }
+
+        input:focus { border-color: #38b2ac; }
+
+        .mw-hint {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        select {
+            padding: 12px 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            outline: none;
+            width: 105px;
+        }
+
+        #calcBtn { 
+            width: 100%;
+            padding: 15px; 
+            font-size: 1.3rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            background-color: #38b2ac; 
+            color: white; 
+            border: none; 
+            border-radius: 15px; 
+            box-shadow: 0 6px 12px rgba(56, 178, 172, 0.25);
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        #calcBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(56, 178, 172, 0.35);
+            background-color: #319795;
+        }
+
+        #calcBtn:active { transform: translateY(1px); }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(247, 250, 252, 0.8);
+            border-left: 5px solid #38b2ac;
+            display: none; 
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .recipe-item {
+            font-size: 1.05rem;
+            color: #4a5568;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .highlight { color: #2b6cb0; font-weight: 700; }
+
+        .headline {
+            font-size: 1.15rem;
+            color: #2b6cb0;
+            font-weight: 700;
+            margin: 4px 0 14px 0;
+            line-height: 1.5;
+        }
+        
+        .error-message {
+            color: #e53e3e;
+            font-weight: 600;
+            background: #fff5f5;
+            border-left: 5px solid #e53e3e;
+            line-height: 1.5;
+        }
+
+        .warning-box {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #fffaf0;
+            border-left: 5px solid #ed8936;
+            color: #9c4221;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div class="lab-title">Huang Lab Tools</div>
+        <h1>Super Universal Calculator</h1>
+
+        <div class="mode-switch">
+            <div class="mode-btn active" id="modeLiquid">💧 Dilution</div>
+            <div class="mode-btn" id="modeSolid">⚖️ Solid</div>
+            <div class="mode-btn" id="modeReverse">🔄 Reverse</div>
+        </div>
+
+        <!-- 反算模式的子切換 -->
+        <div class="sub-switch" id="subSwitch">
+            <div class="sub-btn active" id="subMaxVol">Max Volume</div>
+            <div class="sub-btn" id="subFinalConc">Final Conc.</div>
+        </div>
+
+        <div class="input-group" id="groupMW">
+            <label for="mw">Molecular Weight (MW) <span style="font-weight:400; color:#a0aec0;">[Optional]</span></label>
+            <div class="input-row">
+                <input type="number" id="mw" placeholder="e.g., 58.44" step="any" min="0">
+                <select disabled style="background:#edf2f7; color:#a0aec0; border-color:#edf2f7;"><option>g/mol</option></select>
+            </div>
+            <div class="mw-hint">* Only needed when converting <strong>between</strong> molar units (M/mM/µM/nM) and mass units (w/v %, mg/mL, µg/mL). Molar→molar and mass→mass don't need it.</div>
+        </div>
+
+        <div class="input-group" id="groupC1">
+            <label for="c1">Stock Concentration (C₁)</label>
+            <div class="input-row">
+                <input type="number" id="c1" placeholder="e.g., 10" step="any" min="0">
+                <select id="c1_unit">
+                    <option value="w/v %">w/v %</option>
+                    <option value="v/v %">v/v %</option>
+                    <option value="M">M</option>
+                    <option value="mM" selected>mM</option>
+                    <option value="uM">µM</option>
+                    <option value="nM">nM</option>
+                    <option value="mg/mL">mg/mL</option>
+                    <option value="ug/mL">µg/mL</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 反算模式專用：手上的 stock 體積 -->
+        <div class="input-group" id="groupV1" style="display:none;">
+            <label for="v1">Stock Volume You Have / Will Use (V₁)</label>
+            <div class="input-row">
+                <input type="number" id="v1" placeholder="e.g., 20" step="any" min="0">
+                <select id="v1_unit">
+                    <option value="L">L</option>
+                    <option value="mL">mL</option>
+                    <option value="uL" selected>µL</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-group" id="groupC2">
+            <label for="c2">Target Concentration (C₂)</label>
+            <div class="input-row">
+                <input type="number" id="c2" placeholder="e.g., 50" step="any" min="0">
+                <select id="c2_unit">
+                    <option value="w/v %">w/v %</option>
+                    <option value="v/v %">v/v %</option>
+                    <option value="M">M</option>
+                    <option value="mM">mM</option>
+                    <option value="uM" selected>µM</option>
+                    <option value="nM">nM</option>
+                    <option value="mg/mL">mg/mL</option>
+                    <option value="ug/mL">µg/mL</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-group" id="groupV2">
+            <label for="v2">Target Volume (V₂)</label>
+            <div class="input-row">
+                <input type="number" id="v2" placeholder="e.g., 2" step="any" min="0">
+                <select id="v2_unit">
+                    <option value="L">L</option>
+                    <option value="mL" selected>mL</option>
+                    <option value="uL">µL</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="calcBtn">Calculate Recipe</button>
+        <div id="resultBox" class="result-box"></div>
+    </div>
+
+    <script>
+        let currentMode = 'liquid';   // 'liquid' | 'solid' | 'reverse'
+        let reverseSub  = 'maxvol';   // 'maxvol' | 'finalconc'
+
+        const resultBox = document.getElementById('resultBox');
+        const subSwitch = document.getElementById('subSwitch');
+
+        /* ============================================================
+           單位家族判斷
+           molar : M / mM / µM / nM          (莫耳濃度)
+           mass  : w/v % / mg/mL / µg/mL     (質量/體積濃度，彼此可互換，不需 MW)
+           vv    : v/v %                     (只能與 v/v % 互換)
+           ============================================================ */
+        function unitCategory(unit) {
+            if (['M', 'mM', 'uM', 'nM'].includes(unit)) return 'molar';
+            if (unit === 'v/v %') return 'vv';
+            return 'mass';
+        }
+
+        function toMolar(val, unit) {
+            switch (unit) {
+                case 'M':  return val;
+                case 'mM': return val / 1e3;
+                case 'uM': return val / 1e6;
+                case 'nM': return val / 1e9;
+            }
+            return null;
+        }
+
+        // 質量或莫耳單位 → mg/mL（莫耳單位才需要 MW；v/v % 不適用）
+        function toMgPerMl(val, unit, mw) {
+            const cat = unitCategory(unit);
+            if (cat === 'mass') {
+                if (unit === 'w/v %') return val * 10;   // 1% w/v = 1 g/100 mL = 10 mg/mL
+                if (unit === 'mg/mL') return val;
+                if (unit === 'ug/mL') return val / 1000;
+            }
+            if (cat === 'molar') {
+                if (isNaN(mw) || mw <= 0) return null;
+                return toMolar(val, unit) * mw;          // mol/L × g/mol = g/L = mg/mL
+            }
+            return null;
+        }
+
+        /* 把兩個濃度轉成同一個可比較的數值基準。
+           回傳 { a, b }（C₁基準, C₂基準）或 { error }。
+           - 兩者皆 v/v %  → 直接用 % 數值
+           - 兩者皆 molar  → 用 M（不需 MW）
+           - 其餘（含質量⇄質量、莫耳⇄質量）→ 用 mg/mL（跨莫耳/質量才需 MW） */
+        function comparablePair(c1, u1, c2, u2, mw) {
+            const cat1 = unitCategory(u1), cat2 = unitCategory(u2);
+            if (cat1 === 'vv' || cat2 === 'vv') {
+                if (cat1 !== cat2) return { error: 'vv_cross' };
+                return { a: c1, b: c2 };
+            }
+            if (cat1 === 'molar' && cat2 === 'molar') {
+                return { a: toMolar(c1, u1), b: toMolar(c2, u2) };
+            }
+            const a = toMgPerMl(c1, u1, mw);
+            const b = toMgPerMl(c2, u2, mw);
+            if (a === null || b === null) return { error: 'need_mw' };
+            return { a, b };
+        }
+
+        // 體積 → mL
+        function toMl(v, unit) {
+            if (unit === 'L')  return v * 1000;
+            if (unit === 'uL') return v / 1000;
+            return v;
+        }
+
+        // 數值美化（去掉多餘的零）
+        function num(n, d) { return Number(n.toFixed(d)).toString(); }
+
+        function formatMass(mg) {
+            if (mg >= 1000) return `${num(mg / 1000, 4)} g`;
+            if (mg >= 1)    return `${num(mg, 3)} mg`;
+            return `${num(mg * 1000, 2)} µg`;
+        }
+        function formatVolume(mL) {
+            if (mL >= 1000) return `${num(mL / 1000, 3)} L`;
+            if (mL >= 1)    return `${num(mL, 3)} mL`;
+            return `${num(mL * 1000, 2)} µL`;
+        }
+        function formatConc(val) {
+            if (val >= 1) return num(val, 3);
+            return Number(val.toPrecision(3)).toString();
+        }
+
+        // v/v %、w/v % 不能超過 100%
+        function pctError(val, unit) {
+            if ((unit === 'v/v %' || unit === 'w/v %') && val > 100) {
+                return `<strong>Scientific Error:</strong> A ${unit} concentration cannot exceed 100%.`;
+            }
+            return null;
+        }
+
+        /* ---------- 欄位顯示切換 ---------- */
+        function show(id, on) { document.getElementById(id).style.display = on ? 'block' : 'none'; }
+
+        function updateFields() {
+            if (currentMode === 'liquid') {
+                subSwitch.style.display = 'none';
+                show('groupC1', true); show('groupV1', false); show('groupC2', true); show('groupV2', true);
+                document.querySelector('#groupC2 label').textContent = 'Target Concentration (C₂)';
+                document.querySelector('#groupV2 label').textContent = 'Target Volume (V₂)';
+            } else if (currentMode === 'solid') {
+                subSwitch.style.display = 'none';
+                show('groupC1', false); show('groupV1', false); show('groupC2', true); show('groupV2', true);
+                document.querySelector('#groupC2 label').textContent = 'Target Concentration (C₂)';
+                document.querySelector('#groupV2 label').textContent = 'Target Volume (V₂)';
+            } else { // reverse
+                subSwitch.style.display = 'flex';
+                show('groupC1', true); show('groupV1', true);
+                if (reverseSub === 'maxvol') {
+                    show('groupC2', true); show('groupV2', false);
+                    document.querySelector('#groupC2 label').textContent = 'Desired Working Concentration (C₂)';
+                } else {
+                    show('groupC2', false); show('groupV2', true);
+                    document.querySelector('#groupV2 label').textContent = 'Final Total Volume (V₂)';
+                }
+            }
+            resultBox.style.display = 'none';
+        }
+
+        /* ---------- 主模式切換 ---------- */
+        function setMode(mode, btn) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateFields();
+        }
+        document.getElementById('modeLiquid').addEventListener('click', e => setMode('liquid', e.currentTarget));
+        document.getElementById('modeSolid').addEventListener('click', e => setMode('solid', e.currentTarget));
+        document.getElementById('modeReverse').addEventListener('click', e => setMode('reverse', e.currentTarget));
+
+        /* ---------- 反算子模式切換 ---------- */
+        function setSub(sub, btn) {
+            reverseSub = sub;
+            document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateFields();
+        }
+        document.getElementById('subMaxVol').addEventListener('click', e => setSub('maxvol', e.currentTarget));
+        document.getElementById('subFinalConc').addEventListener('click', e => setSub('finalconc', e.currentTarget));
+
+        /* ---------- 計算 ---------- */
+        const calcBtn = document.getElementById('calcBtn');
+        calcBtn.addEventListener('click', runCalc);
+        ['mw', 'c1', 'v1', 'c2', 'v2'].forEach(id => {
+            document.getElementById(id).addEventListener('keydown', e => {
+                if (e.key === 'Enter') runCalc();
+            });
+        });
+
+        function runCalc() {
+            const mw = parseFloat(document.getElementById('mw').value);
+
+            if (currentMode === 'reverse') { runReverse(mw); return; }
+
+            // 正算共用：C₂ 與 V₂
+            const c2 = parseFloat(document.getElementById('c2').value);
+            const c2_unit = document.getElementById('c2_unit').value;
+            const v2 = parseFloat(document.getElementById('v2').value);
+            const v2_unit = document.getElementById('v2_unit').value;
+
+            if (isNaN(c2) || isNaN(v2) || c2 <= 0 || v2 <= 0) {
+                showError("Please enter valid positive numbers for Target (C₂) and Volume (V₂).");
+                return;
+            }
+            let e = pctError(c2, c2_unit);
+            if (e) { showError(e); return; }
+
+            const v2_mL = toMl(v2, v2_unit);
+
+            /* ============ 固體配藥模式 ============ */
+            if (currentMode === 'solid') {
+                if (c2_unit === 'v/v %') {
+                    showError("<strong>Scientific Error:</strong> Solid powder cannot be used to make a v/v % (volume/volume) solution. Please select w/v %, a molar unit, or mg/mL.");
+                    return;
+                }
+                const target_mg_per_ml = toMgPerMl(c2, c2_unit, mw);
+                if (target_mg_per_ml === null) {
+                    showError("To calculate solid powder for a molar unit, you MUST provide the Molecular Weight (MW).");
+                    return;
+                }
+                const required_mg = target_mg_per_ml * v2_mL;
+
+                let weighWarning = "";
+                if (required_mg < 1) {
+                    weighWarning = `
+                        <div class="warning-box">
+                            <strong>⚠️ Weighing Alert:</strong> The required mass is below 1 mg (<span class="highlight">${formatMass(required_mg)}</span>), which is hard to weigh accurately on a standard analytical balance (±0.1 mg).<br><br>
+                            💡 <strong>Suggestion:</strong> Weigh a larger amount to make a concentrated stock, then use <strong>Liquid Dilution</strong> mode to reach your target.
+                        </div>`;
+                }
+
+                showResult(`
+                    ${weighWarning}
+                    <div class="result-title">⚖️ Solid Powder Recipe:</div>
+                    <div class="recipe-item">1. Weigh <span class="highlight">${formatMass(required_mg)}</span> of solid powder.</div>
+                    <div class="recipe-item">2. Place it in a suitable container.</div>
+                    <div class="recipe-item">3. Add solvent <span class="highlight">up to ${v2} ${v2_unit}</span> to reach a final concentration of <span class="highlight">${c2} ${c2_unit}</span>.</div>
+                `);
+                return;
+            }
+
+            /* ============ 液體稀釋模式 ============ */
+            const c1 = parseFloat(document.getElementById('c1').value);
+            const c1_unit = document.getElementById('c1_unit').value;
+            if (isNaN(c1) || c1 <= 0) {
+                showError("Please enter a valid positive number for Stock Concentration (C₁).");
+                return;
+            }
+            e = pctError(c1, c1_unit);
+            if (e) { showError(e); return; }
+
+            const pair = comparablePair(c1, c1_unit, c2, c2_unit, mw);
+            if (pair.error === 'vv_cross') {
+                showError("<strong>Scientific Error:</strong> You cannot cross-convert v/v % with molar, w/v %, or mass/volume units, because the specific gravity (density) of the liquid is unknown. Please only dilute v/v % to v/v %.");
+                return;
+            }
+            if (pair.error === 'need_mw') {
+                showError("You are converting between molar and mass units. You MUST provide the Molecular Weight (MW).");
+                return;
+            }
+            if (pair.b > pair.a) {
+                showError("Target concentration (C₂) cannot be higher than Stock concentration (C₁).");
+                return;
+            }
+
+            const v1_mL   = (pair.b / pair.a) * v2_mL;   // V₁ = (C₂/C₁)·V₂
+            const v1_uL   = v1_mL * 1000;
+            const total_uL = v2_mL * 1000;
+            const solvent_uL = total_uL - v1_uL;
+
+            let v1Display = (v1_uL >= 1000) ? `${num(v1_uL / 1000, 2)} mL` : `${num(v1_uL, 2)} µL`;
+            if (v1_uL < 0.1) v1Display = `${v1_uL.toFixed(4)} µL`;
+            let solventDisplay = (solvent_uL >= 1000) ? `${num(solvent_uL / 1000, 2)} mL` : `${num(solvent_uL, 2)} µL`;
+
+            let warningHtml = "";
+            if (v1_uL < 1.0) {
+                warningHtml = `
+                    <div class="warning-box">
+                        <strong>⚠️ Pipetting Alert:</strong> The required stock volume is less than 1 µL (<span class="highlight">${v1_uL.toFixed(4)} µL</span>).<br><br>
+                        💡 <strong>Suggestion:</strong> Perform a <strong>serial dilution</strong> to keep accuracy (e.g. dilute the stock 10× or 100× first, then take a pipettable volume).
+                    </div>`;
+            }
+
+            let step3Html = `<div class="recipe-item">3. Total volume will be <span class="highlight">${v2} ${v2_unit}</span> at <span class="highlight">${c2} ${c2_unit}</span>.</div>`;
+            if (unitCategory(c1_unit) === 'vv') {
+                step3Html += `<div class="mw-hint" style="margin-top:8px;">*For high precision: mixing two liquids can cause volume contraction. Instead of adding exactly ${solventDisplay}, add solvent "up to" ${v2} ${v2_unit} in a volumetric flask.</div>`;
+            }
+
+            showResult(`
+                ${warningHtml}
+                <div class="result-title">💧 Liquid Dilution Recipe:</div>
+                <div class="recipe-item">1. Take <span class="highlight">${v1Display}</span> of Stock (${c1} ${c1_unit}).</div>
+                <div class="recipe-item">2. Add <span class="highlight">${solventDisplay}</span> of Solvent.</div>
+                ${step3Html}
+            `);
+        }
+
+        /* ============ 反算模式 ============ */
+        function runReverse(mw) {
+            const c1 = parseFloat(document.getElementById('c1').value);
+            const c1_unit = document.getElementById('c1_unit').value;
+            const v1 = parseFloat(document.getElementById('v1').value);
+            const v1_unit = document.getElementById('v1_unit').value;
+
+            if (isNaN(c1) || c1 <= 0) {
+                showError("Please enter a valid positive number for Stock Concentration (C₁).");
+                return;
+            }
+            if (isNaN(v1) || v1 <= 0) {
+                showError("Please enter a valid positive number for the Stock Volume you have (V₁).");
+                return;
+            }
+            let e = pctError(c1, c1_unit);
+            if (e) { showError(e); return; }
+
+            const v1_mL = toMl(v1, v1_unit);
+
+            /* ---- 子模式 A：算最多能配多少體積 ---- */
+            if (reverseSub === 'maxvol') {
+                const c2 = parseFloat(document.getElementById('c2').value);
+                const c2_unit = document.getElementById('c2_unit').value;
+                if (isNaN(c2) || c2 <= 0) {
+                    showError("Please enter a valid positive number for the Desired Working Concentration (C₂).");
+                    return;
+                }
+                e = pctError(c2, c2_unit);
+                if (e) { showError(e); return; }
+
+                const pair = comparablePair(c1, c1_unit, c2, c2_unit, mw);
+                if (pair.error === 'vv_cross') {
+                    showError("<strong>Scientific Error:</strong> You cannot cross-convert v/v % with molar, w/v %, or mass/volume units. Please keep both concentrations in v/v %.");
+                    return;
+                }
+                if (pair.error === 'need_mw') {
+                    showError("You are converting between molar and mass units. You MUST provide the Molecular Weight (MW).");
+                    return;
+                }
+                if (pair.b > pair.a) {
+                    showError("Your target (C₂) is more concentrated than the stock (C₁). You can only dilute, not concentrate.");
+                    return;
+                }
+
+                const v2_mL = (pair.a / pair.b) * v1_mL;     // V₂ = (C₁/C₂)·V₁
+                const solvent_mL = v2_mL - v1_mL;
+                const foldStr = num(pair.a / pair.b, 2);
+
+                showResult(`
+                    <div class="result-title">🔄 Reverse — Max Volume You Can Make:</div>
+                    <div class="headline">Using all ${v1} ${v1_unit} of stock, you can make up to <span class="highlight">${formatVolume(v2_mL)}</span> at ${c2} ${c2_unit} (a ${foldStr}× dilution).</div>
+                    <div class="recipe-item">1. Take all <span class="highlight">${v1} ${v1_unit}</span> of Stock (${c1} ${c1_unit}).</div>
+                    <div class="recipe-item">2. Add <span class="highlight">${formatVolume(solvent_mL)}</span> of Solvent.</div>
+                    <div class="recipe-item">3. Final: <span class="highlight">${formatVolume(v2_mL)}</span> at <span class="highlight">${c2} ${c2_unit}</span>.</div>
+                `);
+                return;
+            }
+
+            /* ---- 子模式 B：固定最終體積，算最終濃度 ---- */
+            if (reverseSub === 'finalconc') {
+                const v2 = parseFloat(document.getElementById('v2').value);
+                const v2_unit = document.getElementById('v2_unit').value;
+                if (isNaN(v2) || v2 <= 0) {
+                    showError("Please enter a valid positive number for the Final Total Volume (V₂).");
+                    return;
+                }
+                const v2_mL = toMl(v2, v2_unit);
+                if (v2_mL < v1_mL) {
+                    showError("Final Volume (V₂) cannot be smaller than the Stock Volume you're adding (V₁).");
+                    return;
+                }
+
+                const c2_val = c1 * (v1_mL / v2_mL);         // C₂ = C₁·V₁/V₂ （單位同 C₁）
+                const solvent_mL = v2_mL - v1_mL;
+                const foldStr = num(v2_mL / v1_mL, 2);
+
+                showResult(`
+                    <div class="result-title">🔄 Reverse — Final Concentration:</div>
+                    <div class="headline">Diluting ${v1} ${v1_unit} of stock into a final ${v2} ${v2_unit} gives <span class="highlight">${formatConc(c2_val)} ${c1_unit}</span> (a ${foldStr}× dilution).</div>
+                    <div class="recipe-item">1. Take <span class="highlight">${v1} ${v1_unit}</span> of Stock (${c1} ${c1_unit}).</div>
+                    <div class="recipe-item">2. Add solvent up to a final <span class="highlight">${v2} ${v2_unit}</span> (≈ ${formatVolume(solvent_mL)} of solvent).</div>
+                    <div class="recipe-item">3. Final concentration: <span class="highlight">${formatConc(c2_val)} ${c1_unit}</span>.</div>
+                `);
+                return;
+            }
+        }
+
+        function showResult(htmlContent) {
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box';
+            resultBox.innerHTML = htmlContent;
+        }
+        function showError(msg) {
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box error-message';
+            resultBox.innerHTML = `⚠️ ${msg}`;
+        }
+
+        // 初始化
+        updateFields();
+    </script>
+</body>
+</html>
