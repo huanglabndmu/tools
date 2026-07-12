@@ -13,7 +13,7 @@
             justify-content: center; 
             min-height: 100vh; 
             margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
             box-sizing: border-box;
             background-color: #fcfcfd;
             background-image: 
@@ -24,17 +24,14 @@
             background-attachment: fixed;
         }
 
-        .card-container {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            padding: 50px 40px;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        /* 拿掉毛玻璃背景，變成純粹的排版容器 */
+        .portal-wrapper {
             width: 100%;
-            max-width: 800px;
-            border: 1px solid rgba(255, 255, 255, 1);
+            max-width: 1000px; /* 放寬一點讓三張卡片更好看 */
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .lab-title {
@@ -44,80 +41,116 @@
             text-transform: uppercase;
             font-size: 1.1rem;
             margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8); /* 加上白色背光讓字更清楚 */
         }
         
         h1 { 
             color: #1a202c; 
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             margin-top: 0;
             margin-bottom: 10px;
+            text-shadow: 0 2px 5px rgba(255, 255, 255, 0.8);
         }
 
         .subtitle {
-            color: #718096;
+            color: #4a5568;
             font-size: 1.1rem;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            font-weight: 500;
         }
 
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
+            gap: 30px;
+            width: 100%;
+            margin-bottom: 60px;
         }
 
+        /* 既然外框沒了，我們把卡片本身的毛玻璃效果開強一點，讓它們像浮在半空中 */
         .tool-card {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 30px 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
+            padding: 40px 25px;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 25px;
             text-decoration: none;
             color: #2d3748;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 加入超有彈性的動畫曲線 */
+            border: 1px solid rgba(255, 255, 255, 0.9);
         }
 
         .tool-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 25px rgba(56, 178, 172, 0.2);
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px rgba(56, 178, 172, 0.25);
             border-color: #38b2ac;
+            background: rgba(255, 255, 255, 0.85);
         }
 
         .tool-icon {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
+            font-size: 4rem;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover .tool-icon {
+            transform: scale(1.1); /* 游標滑過時 Icon 會微微放大 */
         }
 
         .tool-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 12px;
             color: #2b6cb0;
         }
 
         .tool-desc {
             font-size: 0.95rem;
             color: #4a5568;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
+        /* 智權宣告 (IP Footer) 專屬設計 */
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(203, 213, 224, 0.5);
-            font-size: 0.78rem;
-            color: #a0aec0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-top: auto;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .footer .copyright {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #4a5568;
             letter-spacing: 0.5px;
-            line-height: 1.6;
+        }
+
+        .footer .developer {
+            font-size: 0.8rem;
+            color: #718096;
+            font-family: monospace; /* 用程式碼字體增添開發者氣息 */
+        }
+
+        .footer .disclaimer {
+            font-size: 0.75rem;
+            color: #a0aec0;
+            margin-top: 2px;
         }
     </style>
 </head>
 <body>
 
-    <div class="card-container">
+    <div class="portal-wrapper">
         <div class="lab-title">Graduate Institute of Pharmacology, NDMU</div>
         <h1>Huang Lab Tools</h1>
         <div class="subtitle">Select a tool to launch in a new window 🚀</div>
@@ -134,10 +167,18 @@
                 <div class="tool-title">Universal Calculator</div>
                 <div class="tool-desc">C₁V₁ = C₂V₂ solver — fill any three, solve the fourth. Solid mode included. Molar ⇄ mass auto-conversion.</div>
             </a>
+
+            <a href="rodent_age.html" target="_blank" class="tool-card">
+                <div class="tool-icon">🐭</div>
+                <div class="tool-title">Rodent Age Calculator</div>
+                <div class="tool-desc">Quickly convert between birth dates, experiment dates, and exact weeks/days of age for animal protocols.</div>
+            </a>
         </div>
 
         <div class="footer">
-            Designed &amp; Developed by Ying-Jie Chen &nbsp;·&nbsp; All rights reserved.
+            <div class="copyright">© 2026 Huang Lab. All rights reserved.</div>
+            <div class="developer">Designed & Engineered by Ying-chieh Chen</div>
+            <div class="disclaimer">Internal Laboratory Tools. For Research Use Only.</div>
         </div>
     </div>
 
