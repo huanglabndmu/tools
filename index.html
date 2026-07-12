@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huang Lab Tools Portal</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fcfcfd;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(255, 204, 213, 0.6) 0%, transparent 40%),
+                radial-gradient(circle at 85% 15%, rgba(255, 243, 204, 0.7) 0%, transparent 35%),
+                radial-gradient(circle at 80% 80%, rgba(204, 235, 255, 0.6) 0%, transparent 45%),
+                radial-gradient(circle at 20% 90%, rgba(224, 240, 255, 0.5) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .card-container {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 50px 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid rgba(255, 255, 255, 1);
+            text-align: center;
+        }
+
+        .lab-title {
+            color: #0b5394;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        h1 { 
+            color: #1a202c; 
+            font-size: 2.2rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        /* 工具選單的網格排版 */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        /* 單個工具的按鈕卡片設計 */
+        .tool-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            text-decoration: none; /* 移除超連結底線 */
+            color: #2d3748;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 25px rgba(56, 178, 172, 0.2);
+            border-color: #38b2ac;
+        }
+
+        .tool-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .tool-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2b6cb0;
+        }
+
+        .tool-desc {
+            font-size: 0.95rem;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div class="lab-title">Graduate Institute of Pharmacology, NDMU</div>
+        <h1>Huang Lab Tools</h1>
+        <div class="subtitle">Select a tool to launch in a new window 🚀</div>
+
+        <div class="tools-grid">
+            <a href="timer.html" target="_blank" class="tool-card">
+                <div class="tool-icon">⏱️</div>
+                <div class="tool-title">Interval Timer</div>
+                <div class="tool-desc">30-min countdown with automated 5-minute beep alerts for precise experiments.</div>
+            </a>
+
+            <a href="dilution.html" target="_blank" class="tool-card">
+                <div class="tool-icon">🧪</div>
+                <div class="tool-title">Universal Calculator</div>
+                <div class="tool-desc">Dual-mode calculator for liquid dilutions and solid powder precision weighting.</div>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
