@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huang Lab Tools - Interval Timer</title>
+    <style>
+        /* 糖果色暈染泡泡背景 */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0;
+            background-color: #fcfcfd;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(255, 204, 213, 0.6) 0%, transparent 40%),
+                radial-gradient(circle at 85% 15%, rgba(255, 243, 204, 0.7) 0%, transparent 35%),
+                radial-gradient(circle at 80% 80%, rgba(204, 235, 255, 0.6) 0%, transparent 45%),
+                radial-gradient(circle at 20% 90%, rgba(224, 240, 255, 0.5) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* 實驗室專屬小工具容器 (毛玻璃卡片特效) */
+        .card-container {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* 標題設計 */
+        .lab-title {
+            color: #0b5394; /* 呼應老闆網頁上的深藍色字體 */
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        h1 { 
+            color: #1a202c; 
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+
+        /* 時間顯示器 */
+        #display { 
+            font-size: 6rem; 
+            font-weight: 700; 
+            color: #2d3748; 
+            margin-bottom: 40px;
+            font-variant-numeric: tabular-nums; /* 讓數字寬度固定，跳動時才不會左右晃 */
+        }
+
+        /* 超大顆的控制按鈕 */
+        button { 
+            padding: 20px 60px; 
+            font-size: 1.8rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            background-color: #38b2ac; /* 初始設定為漂亮的湖水綠 */
+            color: white; 
+            border: none; 
+            border-radius: 50px; 
+            box-shadow: 0 8px 15px rgba(56, 178, 172, 0.3);
+            transition: all 0.3s ease; /* 讓顏色變換有柔和的過場動畫 */
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* 用來改變按鈕狀態的 class */
+        .btn-pause {
+            background-color: #e53e3e !important; /* 暫停時變成警示的紅色 */
+            box-shadow: 0 8px 15px rgba(229, 62, 62, 0.3) !important;
+        }
+        .btn-resume {
+            background-color: #dd6b20 !important; /* 繼續時變成活力橘色 */
+            box-shadow: 0 8px 15px rgba(221, 107, 32, 0.3) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div class="lab-title">Huang Lab Tools</div>
+        <h1>30-Min Interval Timer</h1>
+        
+        <div id="display">30:00</div>
+        
+        <button id="actionBtn">Start</button>
+    </div>
+
+    <script>
+        const totalTime = 30 * 60; 
+        const intervalTime = 5 * 60; 
+        let timeRemaining = totalTime;
+        let timer;
+        let isRunning = false; // 記錄目前是否正在計時中
+        let audioCtx;
+
+        const display = document.getElementById('display');
+        const actionBtn = document.getElementById('actionBtn');
+
+        // 初始化音效 (確保瀏覽器允許發聲)
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 發出「逼」聲的函數
+        function playBeep() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime); 
+            osc.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5); 
+        }
+
+        // 更新畫面時間
+        function updateDisplay(seconds) {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            display.textContent = `${mins}:${secs}`;
+        }
+
+        // 核心邏輯：控制 開始/暫停/繼續
+        actionBtn.addEventListener('click', () => {
+            initAudio(); // 每次點擊都確保音效引擎醒著
+
+            if (isRunning) {
+                // 如果正在計時 -> 執行「暫停」邏輯
+                clearInterval(timer);
+                isRunning = false;
+                actionBtn.textContent = 'Resume'; // 按鈕文字變成繼續
+                actionBtn.className = 'btn-resume'; // 換成橘色
+                
+            } else {
+                // 如果停止或暫停中 -> 執行「開始」或「繼續」邏輯
+                isRunning = true;
+                actionBtn.textContent = 'Pause'; // 按鈕文字變成暫停
+                actionBtn.className = 'btn-pause'; // 換成紅色
+
+                timer = setInterval(() => {
+                    timeRemaining--;
+                    updateDisplay(timeRemaining);
+
+                    // 每 5 分鐘響鈴 (過濾掉 0 秒)
+                    if (timeRemaining > 0 && timeRemaining % intervalTime === 0) {
+                        playBeep();
+                    }
+
+                    // 倒數結束
+                    if (timeRemaining <= 0) {
+                        clearInterval(timer);
+                        isRunning = false;
+                        
+                        // 結束時連逼三聲
+                        playBeep();
+                        setTimeout(playBeep, 600); 
+                        setTimeout(playBeep, 1200);
+                        
+                        // 重置為初始狀態
+                        actionBtn.textContent = 'Start';
+                        actionBtn.className = ''; // 恢復原本的湖水綠
+                        timeRemaining = totalTime;
+                        setTimeout(() => updateDisplay(timeRemaining), 2000);
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
