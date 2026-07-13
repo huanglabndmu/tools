@@ -114,43 +114,48 @@
             line-height: 1.6;
         }
 
-/* 智權宣告 (IP Footer) 專屬設計 */
+/* 智權宣告 (IP Footer) 專屬設計 - 極簡俐落版 */
         .footer {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             margin-top: auto;
-            padding: 20px 40px;
+            padding: 25px 30px;
             background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(10px);
-            border-radius: 50px;
+            border-radius: 40px;
             border: 1px solid rgba(255, 255, 255, 0.6);
-            text-align: center; /* 確保手機版置中對齊 */
+            text-align: center;
         }
 
         .footer .copyright {
             font-size: 0.85rem;
             font-weight: 700;
             color: #4a5568;
-            letter-spacing: 0.5px;
         }
 
         .footer .developer {
             font-size: 0.8rem;
-            color: #4a5568; /* 🌟 顏色調深，提升閱讀性 (原本是 #718096) */
-            font-family: monospace; 
+            color: #4a5568; 
+            margin-top: 2px;
         }
 
-        /* 🌟 新增：專門用來保護你的名字不被切斷的樣式 */
+        /* 讓名字變成專屬的工程師簽名風格 */
         .footer .developer .name {
             white-space: nowrap;
+            font-family: monospace;
+            font-weight: 800;
+            color: #2b6cb0;
+            font-size: 0.85rem;
+            margin-left: 4px;
         }
 
         .footer .disclaimer {
             font-size: 0.75rem;
-            color: #718096; /* 🌟 顏色調深，提升閱讀性 (原本是 #a0aec0) */
-            margin-top: 2px;
+            color: #718096;
+            font-style: italic; /* 加上斜體，增加排版層次感 */
+            margin-top: 4px;
         }
     </style>
 
@@ -182,11 +187,10 @@
             </a>
         </div>
 
-<!-- 高質感智權宣告區 -->
-        <div class="footer">
+    <div class="footer">
             <div class="copyright">© 2026 Huang Lab. All rights reserved.</div>
-            <div class="developer">Designed & Engineered by <span class="name">Ying-Jie Chen</span></div>
-            <div class="disclaimer">Internal Laboratory Tools. For Research Use Only.</div>
+            <div class="developer">Designed by<span class="name">Ying-Jie Chen</span></div>
+            <div class="disclaimer">For Research Use Only.</div>
         </div>
 
 </body>
