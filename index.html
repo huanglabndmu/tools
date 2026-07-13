@@ -114,7 +114,7 @@
             line-height: 1.6;
         }
 
-        /* 智權宣告 (IP Footer) 專屬設計 */
+/* 智權宣告 (IP Footer) 專屬設計 */
         .footer {
             display: flex;
             flex-direction: column;
@@ -126,6 +126,7 @@
             backdrop-filter: blur(10px);
             border-radius: 50px;
             border: 1px solid rgba(255, 255, 255, 0.6);
+            text-align: center; /* 確保手機版置中對齊 */
         }
 
         .footer .copyright {
@@ -137,17 +138,20 @@
 
         .footer .developer {
             font-size: 0.8rem;
-            color: #718096;
-            font-family: monospace; /* 用程式碼字體增添開發者氣息 */
+            color: #4a5568; /* 🌟 顏色調深，提升閱讀性 (原本是 #718096) */
+            font-family: monospace; 
+        }
+
+        /* 🌟 新增：專門用來保護你的名字不被切斷的樣式 */
+        .footer .developer .name {
+            white-space: nowrap;
         }
 
         .footer .disclaimer {
             font-size: 0.75rem;
-            color: #a0aec0;
+            color: #718096; /* 🌟 顏色調深，提升閱讀性 (原本是 #a0aec0) */
             margin-top: 2px;
         }
-    </style>
-</head>
 <body>
 
     <div class="portal-wrapper">
@@ -175,12 +179,12 @@
             </a>
         </div>
 
+<!-- 高質感智權宣告區 -->
         <div class="footer">
             <div class="copyright">© 2026 Huang Lab. All rights reserved.</div>
-            <div class="developer">Designed & Engineered by Ying-Jie Chen</div>
+            <div class="developer">Designed & Engineered by <span class="name">Ying-Jie Chen</span></div>
             <div class="disclaimer">Internal Laboratory Tools. For Research Use Only.</div>
         </div>
-    </div>
 
 </body>
 </html>
