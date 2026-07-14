@@ -38,29 +38,32 @@
             box-sizing: border-box;
         }
 
-        /* ===== 專屬高質感 Share 按鈕 ===== */
+        /* ===== Share 按鈕：結果下方的行動按鈕（算出結果才出現） ===== */
         .share-btn {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(203, 213, 224, 0.8);
+            display: none;               /* 有結果時由 JS 加上 .show */
+            width: 100%;
+            margin-top: 14px;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(203, 213, 224, 0.9);
             color: #2b6cb0;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 13px 18px;
+            border-radius: 14px;
+            font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-sizing: border-box;
         }
+
+        .share-btn.show { display: flex; }
 
         .share-btn:hover {
             background: #ffffff;
-            transform: translateY(-3px) scale(1.02);
+            transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(43, 108, 176, 0.15);
             border-color: #38b2ac;
             color: #0b5394;
@@ -282,7 +285,6 @@
 <body>
 
     <div class="card-container">
-        <button class="share-btn" id="shareBtn" title="Share this calculation">📤 Share</button>
         <div class="lab-title">Huang Lab Tools</div>
         <h1>Rodent Age Calculator</h1>
 
@@ -319,6 +321,7 @@
 
         <button id="calcBtn">Calculate</button>
         <div id="resultBox" class="result-box"></div>
+        <button class="share-btn" id="shareBtn" title="Share this calculation">📤 Share this result</button>
 
         <div class="footer">
             Designed &amp; Developed by Ying-Jie Chen &nbsp;·&nbsp; Huang Lab, NDMC
@@ -329,6 +332,9 @@
 
     <script>
         const SLOTS = ['birth', 'age', 'exp'];
+        const shareBtn = document.getElementById('shareBtn');
+        const toast = document.getElementById('toast');
+        let lastResultText = null;
         const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         const birthI = document.getElementById('birth');
@@ -456,21 +462,19 @@
                 ${weekendNote}
             `;
             lastResultText = extractResultText();
+            shareBtn.classList.add('show');      // 有結果了才顯示分享按鈕
         }
 
         function showError(msg) {
             resultBox.innerHTML = `⚠️ ${msg}`;
             resultBox.className = 'result-box error-message';
             lastResultText = null;   // 有錯誤就沒有可分享的結果
+            shareBtn.classList.remove('show');
         }
 
         /* ============================================================
            分享：深層連結 + 一鍵複製結果
            ============================================================ */
-        const shareBtn = document.getElementById('shareBtn');
-        const toast = document.getElementById('toast');
-        let lastResultText = null;
-
         // 從結果卡抓出純文字（含週末警示，那對排程很重要）
         function extractResultText() {
             const head  = resultBox.querySelector('.headline');
@@ -529,11 +533,9 @@
         }
 
         shareBtn.addEventListener('click', async () => {
-            const link = lastResultText ? buildDeepLink()
-                                        : location.origin + location.pathname;
-            const payload = lastResultText
-                ? `${lastResultText}\n\nOpen this calculation:\n${link}`
-                : `Huang Lab — Rodent Age Calculator\n${link}`;
+            if (!lastResultText) return;        // 按鈕只在有結果時出現，保險再擋一次
+            const link = buildDeepLink();
+            const payload = `${lastResultText}\n\nOpen this calculation:\n${link}`;
 
             if (navigator.share) {
                 try {
@@ -546,7 +548,7 @@
 
             const ok = await copyText(payload);
             showToast(ok
-                ? (lastResultText ? '✨ Result + link copied to clipboard!' : '✨ Link copied to clipboard!')
+                ? '✨ Result + link copied to clipboard!'
                 : '⚠️ Copy failed — please select and copy manually.', ok);
         });
 
