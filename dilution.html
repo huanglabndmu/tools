@@ -308,7 +308,7 @@
                 <input type="number" id="c2" placeholder="e.g., 50" step="any" min="0">
                 <select id="c2_unit">
                     <option value="w/v %">w/v %</option>
-                    <option value="v/v %">v/v %</option>
+                    <option value="v/v %" id="c2opt_vv">v/v %</option>
                     <option value="M">M</option>
                     <option value="mM">mM</option>
                     <option value="uM" selected>µM</option>
@@ -356,6 +356,10 @@
         }
         function fromMolar(M, unit) {
             return { M: M, mM: M * 1e3, uM: M * 1e6, nM: M * 1e9 }[unit];
+        }
+        // 顯示用：把內部單位碼統一成帶 µ 的漂亮寫法（內部運算仍用 ASCII 碼）
+        function displayUnit(u) {
+            return { 'uM': 'µM', 'ug/mL': 'µg/mL' }[u] || u;
         }
         function toMgPerMl(val, unit, mw) {
             const cat = unitCategory(unit);
@@ -458,16 +462,22 @@
         }
 
         function updateFields() {
+            const vvOpt = document.getElementById('c2opt_vv');
+            const c2sel = document.getElementById('c2_unit');
             if (currentMode === 'dilution') {
                 solveHint.innerHTML = "Fill in any <strong>three</strong> — leave one blank and it's solved automatically.";
                 show('groupC1', true); show('groupV1', true); show('groupMass', false); show('groupC2', true); show('groupV2', true);
                 document.querySelector('#groupC2 label').firstChild.textContent = 'Final Concentration (C₂) ';
                 document.querySelector('#groupV2 label').firstChild.textContent = 'Final Volume (V₂) ';
+                vvOpt.hidden = false; vvOpt.disabled = false;   // 稀釋模式保留 v/v %
             } else { // solid
                 solveHint.innerHTML = "Fill in any <strong>two</strong> — leave one blank and it's solved automatically.";
                 show('groupC1', false); show('groupV1', false); show('groupMass', true); show('groupC2', true); show('groupV2', true);
                 document.querySelector('#groupC2 label').firstChild.textContent = 'Concentration (C₂) ';
                 document.querySelector('#groupV2 label').firstChild.textContent = 'Solution Volume (V₂) ';
+                // 固體無法配 v/v % → 從單位選單移除；若目前正選著它，切回 mg/mL
+                if (c2sel.value === 'v/v %') c2sel.value = 'mg/mL';
+                vvOpt.hidden = true; vvOpt.disabled = true;
             }
             solveHint.style.display = 'block';
             resultBox.style.display = 'none';
@@ -590,8 +600,8 @@
             const v1_uL = v1_mL * 1000;
 
             // 顯示字串
-            const c1Str = `${formatConc(R.c1)} ${R.u1}`;
-            const c2Str = `${formatConc(R.c2)} ${R.u2}`;
+            const c1Str = `${formatConc(R.c1)} ${displayUnit(R.u1)}`;
+            const c2Str = `${formatConc(R.c2)} ${displayUnit(R.u2)}`;
             const v1Str = formatVolume(v1_mL);
             const v2Str = formatVolume(v2_mL);
             const solventStr = formatVolume(solvent_mL);
@@ -608,10 +618,12 @@
                     </div>`;
             }
 
-            // v/v % 的定容提示
+            // 定容提示：v/v% 混合，或 stock 佔最終體積比例夠大時，體積不完全可加 → 建議定容。
+            // 高倍稀釋（stock 佔比很小）時影響可忽略，不顯示以保持乾淨。
             let precisionNote = "";
-            if (unitCategory(R.u1) === 'vv') {
-                precisionNote = `<div class="mw-hint" style="margin-top:8px;">*Mixing liquids can cause slight volume contraction. For high precision, add solvent "up to" ${v2Str} in a volumetric flask.</div>`;
+            const stockFraction = v1_mL / v2_mL;
+            if (unitCategory(R.u1) === 'vv' || stockFraction >= 0.1) {
+                precisionNote = `<div class="mw-hint" style="margin-top:8px;">*Liquid volumes aren't perfectly additive — mixing can cause slight contraction, and a concentrated stock carries its own volume. For accuracy, place the stock in a volumetric flask and add solvent <strong>up to ${v2Str}</strong>, rather than adding exactly ${solventStr}.</div>`;
             }
 
             showResult(`
@@ -679,7 +691,7 @@
             const v2_mL   = (R.v2u === 'mL_raw') ? R.v2 : toMl(R.v2, R.v2u);
             const massStr = formatMass(mass_mg);
             const v2Str   = formatVolume(v2_mL);
-            const c2Str   = `${formatConc(R.c2)} ${R.c2u}`;
+            const c2Str   = `${formatConc(R.c2)} ${displayUnit(R.c2u)}`;
             const solvedLabel = { mass: `m = ${massStr}`, c2: `C₂ = ${c2Str}`, v2: `V₂ = ${v2Str}` }[target];
 
             let weighWarning = "";
