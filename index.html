@@ -51,7 +51,8 @@
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s ease;
+            /* 🌟 魔法三：彈簧回彈曲線 */
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -60,7 +61,7 @@
 
         .portal-share-btn:hover {
             background: rgba(255, 255, 255, 0.95);
-            transform: translateY(-2px);
+            transform: translateY(-4px);   /* 幅度加大，觸發果凍回彈 */
             box-shadow: 0 8px 20px rgba(43, 108, 176, 0.1);
             color: #2b6cb0;             /* 游標滑過時才點亮專屬藍色 */
             border-color: rgba(43, 108, 176, 0.2);
