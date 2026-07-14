@@ -25,6 +25,7 @@
         }
 
         .card-container {
+            position: relative;
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
@@ -36,6 +37,58 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-sizing: border-box;
         }
+
+        /* ===== 專屬高質感 Share 按鈕 ===== */
+        .share-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(203, 213, 224, 0.8);
+            color: #2b6cb0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .share-btn:hover {
+            background: #ffffff;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 15px rgba(43, 108, 176, 0.15);
+            border-color: #38b2ac;
+            color: #0b5394;
+        }
+
+        .share-btn:active { transform: translateY(1px); }
+
+        /* ===== 浮動提示 (Toast) ===== */
+        .toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(45, 55, 72, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast.show { bottom: 40px; }
 
         .lab-title {
             color: #0b5394;
@@ -229,6 +282,7 @@
 <body>
 
     <div class="card-container">
+        <button class="share-btn" id="shareBtn" title="Share this calculation">📤 Share</button>
         <div class="lab-title">Huang Lab Tools</div>
         <h1>Rodent Age Calculator</h1>
 
@@ -267,9 +321,11 @@
         <div id="resultBox" class="result-box"></div>
 
         <div class="footer">
-            Designed &amp; Developed by Ying-Jie Chen &nbsp;·&nbsp; Huang Lab, NDMU
+            Designed &amp; Developed by Ying-Jie Chen &nbsp;·&nbsp; Huang Lab, NDMC
         </div>
     </div>
+
+    <div id="toast" class="toast">✨ Copied to clipboard!</div>
 
     <script>
         const SLOTS = ['birth', 'age', 'exp'];
@@ -399,12 +455,110 @@
                 <div class="sub-note">Postnatal day <strong>P${TD}</strong> &nbsp;·&nbsp; ${TD} days total.</div>
                 ${weekendNote}
             `;
+            lastResultText = extractResultText();
         }
 
         function showError(msg) {
             resultBox.innerHTML = `⚠️ ${msg}`;
             resultBox.className = 'result-box error-message';
+            lastResultText = null;   // 有錯誤就沒有可分享的結果
         }
+
+        /* ============================================================
+           分享：深層連結 + 一鍵複製結果
+           ============================================================ */
+        const shareBtn = document.getElementById('shareBtn');
+        const toast = document.getElementById('toast');
+        let lastResultText = null;
+
+        // 從結果卡抓出純文字（含週末警示，那對排程很重要）
+        function extractResultText() {
+            const head  = resultBox.querySelector('.headline');
+            const items = resultBox.querySelectorAll('.recipe-item');
+            const note  = resultBox.querySelector('.sub-note');
+            const warn  = resultBox.querySelector('.weekend-note');
+            const lines = ['Huang Lab — Rodent Age Calculator'];
+            if (head) lines.push(head.textContent.trim());
+            items.forEach(el => lines.push(el.textContent.trim()));
+            if (note) lines.push(note.textContent.trim());
+            if (warn) lines.push(warn.textContent.trim());
+            return lines.join('\n');
+        }
+
+        /* ---------- 穩健的複製：Clipboard API → execCommand ---------- */
+        async function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                try { await navigator.clipboard.writeText(text); return true; }
+                catch (e) { /* 落到備援 */ }
+            }
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.top = '-1000px';
+                ta.setAttribute('readonly', '');
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok;
+            } catch (e) { return false; }
+        }
+
+        /* ---------- 深層連結：帶著輸入值，留空那格由對方重新算出 ---------- */
+        function buildDeepLink() {
+            const p = new URLSearchParams();
+            const put = (k, id) => { const v = document.getElementById(id).value.trim(); if (v !== '') p.set(k, v); };
+            put('birth', 'birth');
+            put('w', 'weeks');
+            put('d', 'days');
+            put('exp', 'exp');
+            return location.origin + location.pathname + '#' + p.toString();
+        }
+
+        function loadFromHash() {
+            if (!location.hash || location.hash.length < 2) return;
+            const p = new URLSearchParams(location.hash.slice(1));
+            const setV = (id, k) => { const v = p.get(k); if (v !== null) document.getElementById(id).value = v; };
+            setV('birth', 'birth');
+            setV('weeks', 'w');
+            setV('days', 'd');
+            setV('exp', 'exp');
+            refreshTarget();
+            calculate();   // 對方一打開就看到算好的結果
+        }
+
+        shareBtn.addEventListener('click', async () => {
+            const link = lastResultText ? buildDeepLink()
+                                        : location.origin + location.pathname;
+            const payload = lastResultText
+                ? `${lastResultText}\n\nOpen this calculation:\n${link}`
+                : `Huang Lab — Rodent Age Calculator\n${link}`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'Huang Lab — Rodent Age Calculator', text: payload });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;   // 使用者取消，不算錯誤
+                }
+            }
+
+            const ok = await copyText(payload);
+            showToast(ok
+                ? (lastResultText ? '✨ Result + link copied to clipboard!' : '✨ Link copied to clipboard!')
+                : '⚠️ Copy failed — please select and copy manually.', ok);
+        });
+
+        function showToast(msg, ok = true) {
+            if (msg) toast.textContent = msg;
+            toast.style.background = ok ? 'rgba(45, 55, 72, 0.95)' : 'rgba(197, 48, 48, 0.92)';
+            toast.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
+        loadFromHash();   // 若網址帶著參數，開啟即自動填好並算出結果
     </script>
 </body>
 </html>
