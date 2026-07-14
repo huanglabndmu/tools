@@ -39,29 +39,32 @@
             box-sizing: border-box;
         }
 
-        /* ===== 專屬高質感 Share 按鈕 ===== */
+        /* ===== Share 按鈕：結果下方的行動按鈕（算出結果才出現） ===== */
         .share-btn {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(203, 213, 224, 0.8);
+            display: none;               /* 有結果時由 JS 加上 .show */
+            width: 100%;
+            margin-top: 14px;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(203, 213, 224, 0.9);
             color: #2b6cb0;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 13px 18px;
+            border-radius: 14px;
+            font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-sizing: border-box;
         }
+
+        .share-btn.show { display: flex; }
 
         .share-btn:hover {
             background: #ffffff;
-            transform: translateY(-3px) scale(1.02);
+            transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(43, 108, 176, 0.15);
             border-color: #38b2ac;
             color: #0b5394;
@@ -297,7 +300,6 @@
 <body>
 
     <div class="card-container">
-        <button class="share-btn" id="shareBtn" title="Share this calculation">📤 Share</button>
 
         <div class="lab-title">Huang Lab Tools</div>
         <h1>Super Universal Calculator</h1>
@@ -392,6 +394,7 @@
 
         <button id="calcBtn">Calculate</button>
         <div id="resultBox" class="result-box"></div>
+        <button class="share-btn" id="shareBtn" title="Share this calculation">📤 Share this recipe</button>
     </div>
 
     <div id="toast" class="toast">✨ Copied to clipboard!</div>
@@ -466,12 +469,9 @@
 
         /* ---------- 分享：有結果就分享配方，沒有就分享工具連結 ---------- */
         shareBtn.addEventListener('click', async () => {
-            const link = lastRecipeText ? buildDeepLink()
-                                        : location.origin + location.pathname;
-
-            const payload = lastRecipeText
-                ? `${lastRecipeText}\n\nOpen this calculation:\n${link}`
-                : `Huang Lab — Universal Calculator\n${link}`;
+            if (!lastRecipeText) return;        // 按鈕只在有結果時出現，保險再擋一次
+            const link = buildDeepLink();
+            const payload = `${lastRecipeText}\n\nOpen this calculation:\n${link}`;
 
             // 手機：叫出系統分享選單（LINE / Mail / Slack…）
             if (navigator.share) {
@@ -490,7 +490,7 @@
             // 桌面：複製到剪貼簿
             const ok = await copyText(payload);
             showToast(ok
-                ? (lastRecipeText ? '✨ Recipe + link copied to clipboard!' : '✨ Link copied to clipboard!')
+                ? '✨ Recipe + link copied to clipboard!'
                 : '⚠️ Copy failed — please select and copy manually.', ok);
         });
 
@@ -643,6 +643,8 @@
             }
             solveHint.style.display = 'block';
             resultBox.style.display = 'none';
+            lastRecipeText = null;                 // 切換模式 → 舊配方失效
+            shareBtn.classList.remove('show');
             refreshTarget();
         }
 
@@ -878,12 +880,14 @@
             resultBox.innerHTML = html;
             // 把結果轉成乾淨的純文字配方，供分享／貼進實驗記錄本
             lastRecipeText = extractRecipeText();
+            shareBtn.classList.add('show');      // 有配方了才顯示分享按鈕
         }
         function showError(msg) {
             resultBox.style.display = 'block';
             resultBox.className = 'result-box error-message';
             resultBox.innerHTML = `⚠️ ${msg}`;
             lastRecipeText = null;   // 有錯誤就沒有可分享的配方
+            shareBtn.classList.remove('show');
         }
 
         // 從結果卡抓出可讀的純文字（保留步驟編號，去掉警告框與註腳）
