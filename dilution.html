@@ -25,6 +25,8 @@
         }
 
         .card-container {
+            /* 加上 relative 讓分享按鈕可以絕對定位在右上角 */
+            position: relative; 
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -35,6 +37,61 @@
             max-width: 500px;
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-sizing: border-box;
+        }
+
+        /* ===== 專屬高質感 Share 按鈕 ===== */
+        .share-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(203, 213, 224, 0.8);
+            color: #2b6cb0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .share-btn:hover {
+            background: #ffffff;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 15px rgba(43, 108, 176, 0.15);
+            border-color: #38b2ac;
+            color: #0b5394;
+        }
+
+        .share-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* ===== 複製連結成功的浮動提示 (Toast) ===== */
+        .toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(45, 55, 72, 0.95);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            bottom: 40px;
         }
 
         .lab-title {
@@ -240,6 +297,8 @@
 <body>
 
     <div class="card-container">
+        <button class="share-btn" id="shareBtn" title="Share this calculation">📤 Share</button>
+
         <div class="lab-title">Huang Lab Tools</div>
         <h1>Super Universal Calculator</h1>
 
@@ -335,7 +394,116 @@
         <div id="resultBox" class="result-box"></div>
     </div>
 
+    <div id="toast" class="toast">✨ Copied to clipboard!</div>
+
     <script>
+        /* ===== 分享功能 (Web Share API & 備用複製功能) ===== */
+        const shareBtn = document.getElementById('shareBtn');
+        const toast = document.getElementById('toast');
+
+        // 最近一次成功計算的純文字配方（沒有計算過就是 null）
+        let lastRecipeText = null;
+
+        /* ---------- 穩健的複製：Clipboard API → execCommand → 手動選取 ---------- */
+        async function copyText(text) {
+            // 現代 API（需 HTTPS 或 localhost）
+            if (navigator.clipboard && window.isSecureContext) {
+                try { await navigator.clipboard.writeText(text); return true; }
+                catch (e) { /* 落到下面的備援 */ }
+            }
+            // 備援：舊式 execCommand（file:// 或舊瀏覽器也能用）
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.top = '-1000px';
+                ta.setAttribute('readonly', '');
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok;
+            } catch (e) { return false; }
+        }
+
+        /* ---------- 把目前的輸入編成深層連結（打開即已填好） ---------- */
+        function buildDeepLink() {
+            const p = new URLSearchParams();
+            p.set('mode', currentMode);
+            const put = (k, id) => { const v = document.getElementById(id).value.trim(); if (v !== '') p.set(k, v); };
+            put('mw', 'mw');
+            if (currentMode === 'dilution') {
+                put('c1', 'c1'); p.set('u1', document.getElementById('c1_unit').value);
+                put('v1', 'v1'); p.set('vu1', document.getElementById('v1_unit').value);
+            } else {
+                put('m', 'mass'); p.set('mu', document.getElementById('mass_unit').value);
+            }
+            put('c2', 'c2'); p.set('u2', document.getElementById('c2_unit').value);
+            put('v2', 'v2'); p.set('vu2', document.getElementById('v2_unit').value);
+            return location.origin + location.pathname + '#' + p.toString();
+        }
+
+        /* ---------- 打開時若網址帶參數 → 自動填入並計算 ---------- */
+        function loadFromHash() {
+            if (!location.hash || location.hash.length < 2) return false;
+            const p = new URLSearchParams(location.hash.slice(1));
+            const mode = p.get('mode');
+            if (mode === 'solid') setMode('solid', document.getElementById('modeSolid'));
+            else setMode('dilution', document.getElementById('modeDilution'));
+
+            const setV = (id, k) => { const v = p.get(k); if (v !== null) document.getElementById(id).value = v; };
+            const setU = (id, k) => { const v = p.get(k); if (v !== null) document.getElementById(id).value = v; };
+            setV('mw', 'mw');
+            setV('c1', 'c1'); setU('c1_unit', 'u1');
+            setV('v1', 'v1'); setU('v1_unit', 'vu1');
+            setV('mass', 'm'); setU('mass_unit', 'mu');
+            setV('c2', 'c2'); setU('c2_unit', 'u2');
+            setV('v2', 'v2'); setU('v2_unit', 'vu2');
+            refreshTarget();
+            runCalc();     // 直接算出結果，對方一開就看到配方
+            return true;
+        }
+
+        /* ---------- 分享：有結果就分享配方，沒有就分享工具連結 ---------- */
+        shareBtn.addEventListener('click', async () => {
+            const link = lastRecipeText ? buildDeepLink()
+                                        : location.origin + location.pathname;
+
+            const payload = lastRecipeText
+                ? `${lastRecipeText}\n\nOpen this calculation:\n${link}`
+                : `Huang Lab — Universal Calculator\n${link}`;
+
+            // 手機：叫出系統分享選單（LINE / Mail / Slack…）
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Huang Lab — Universal Calculator',
+                        text: payload
+                    });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;   // 使用者自己取消，不當作錯誤
+                    /* 其他錯誤 → 落到複製備援 */
+                }
+            }
+
+            // 桌面：複製到剪貼簿
+            const ok = await copyText(payload);
+            showToast(ok
+                ? (lastRecipeText ? '✨ Recipe + link copied to clipboard!' : '✨ Link copied to clipboard!')
+                : '⚠️ Copy failed — please select and copy manually.', ok);
+        });
+
+        // 彈出提示動畫邏輯
+        function showToast(msg, ok = true) {
+            if (msg) toast.textContent = msg;
+            toast.style.background = ok ? 'rgba(45, 55, 72, 0.9)' : 'rgba(197, 48, 48, 0.92)';
+            toast.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
+        /* ===== 計算機核心邏輯 (維持原樣) ===== */
         let currentMode = 'dilution';   // 'dilution' | 'solid'
 
         const resultBox = document.getElementById('resultBox');
@@ -357,7 +525,6 @@
         function fromMolar(M, unit) {
             return { M: M, mM: M * 1e3, uM: M * 1e6, nM: M * 1e9 }[unit];
         }
-        // 顯示用：把內部單位碼統一成帶 µ 的漂亮寫法（內部運算仍用 ASCII 碼）
         function displayUnit(u) {
             return { 'uM': 'µM', 'ug/mL': 'µg/mL' }[u] || u;
         }
@@ -375,24 +542,20 @@
             return null;
         }
 
-        /* 決定兩個濃度單位的共同基準：'vv' | 'molar' | 'mass' | 'vv_cross' */
         function basisType(u1, u2) {
             const a = unitCategory(u1), b = unitCategory(u2);
             if (a === 'vv' || b === 'vv') return (a === b) ? 'vv' : 'vv_cross';
             if (a === 'molar' && b === 'molar') return 'molar';
             return 'mass';
         }
-        // 濃度值 → 基準值（mass 基準為 mg/mL，molar 基準為 M，vv 基準為 % 本身）
         function toBasis(val, unit, type, mw) {
             if (type === 'vv') return val;
             if (type === 'molar') return toMolar(val, unit);
-            return toMgPerMl(val, unit, mw); // null 代表缺 MW
+            return toMgPerMl(val, unit, mw); 
         }
-        // 基準值 → 指定單位
         function fromBasis(val, unit, type, mw) {
             if (type === 'vv') return val;
             if (type === 'molar') return fromMolar(val, unit);
-            // mass 基準 (mg/mL)
             const cat = unitCategory(unit);
             if (cat === 'mass') {
                 if (unit === 'w/v %') return val / 10;
@@ -401,7 +564,7 @@
             }
             if (cat === 'molar') {
                 if (isNaN(mw) || mw <= 0) return null;
-                return fromMolar(val / mw, unit);        // mg/mL ÷ (g/mol) = M
+                return fromMolar(val / mw, unit);        
             }
             return null;
         }
@@ -469,13 +632,12 @@
                 show('groupC1', true); show('groupV1', true); show('groupMass', false); show('groupC2', true); show('groupV2', true);
                 document.querySelector('#groupC2 label').firstChild.textContent = 'Final Concentration (C₂) ';
                 document.querySelector('#groupV2 label').firstChild.textContent = 'Final Volume (V₂) ';
-                vvOpt.hidden = false; vvOpt.disabled = false;   // 稀釋模式保留 v/v %
-            } else { // solid
+                vvOpt.hidden = false; vvOpt.disabled = false;   
+            } else { 
                 solveHint.innerHTML = "Fill in any <strong>two</strong> — leave one blank and it's solved automatically.";
                 show('groupC1', false); show('groupV1', false); show('groupMass', true); show('groupC2', true); show('groupV2', true);
                 document.querySelector('#groupC2 label').firstChild.textContent = 'Concentration (C₂) ';
                 document.querySelector('#groupV2 label').firstChild.textContent = 'Solution Volume (V₂) ';
-                // 固體無法配 v/v % → 從單位選單移除；若目前正選著它，切回 mg/mL
                 if (c2sel.value === 'v/v %') c2sel.value = 'mg/mL';
                 vvOpt.hidden = true; vvOpt.disabled = true;
             }
@@ -525,7 +687,6 @@
                 return;
             }
 
-            // 已填數值需為正
             for (const id of CONC_FIELDS) {
                 if (provided[id] && !(val(id) > 0)) {
                     showError("All entered values must be positive numbers.");
@@ -537,9 +698,8 @@
             if (provided.c2) { e = pctError(c2, u2); if (e) { showError(e); return; } }
 
             const target = missing[0];
-            let R = { c1, u1, v1, vu1, c2, u2, v2, vu2 }; // 解出後填回
+            let R = { c1, u1, v1, vu1, c2, u2, v2, vu2 }; 
 
-            // ---- 解「體積」：兩個濃度都已知，用共同基準求比值 ----
             if (target === 'v1' || target === 'v2') {
                 const type = basisType(u1, u2);
                 if (type === 'vv_cross') { showError(vvCrossMsg()); return; }
@@ -548,14 +708,13 @@
                 if (cb1 === null || cb2 === null) { showError(needMwMsg()); return; }
 
                 if (target === 'v1') {
-                    R.v1 = (cb2 / cb1) * toMl(v2, vu2);   // mL
+                    R.v1 = (cb2 / cb1) * toMl(v2, vu2);   
                     R.vu1 = 'mL_raw';
                 } else {
-                    R.v2 = (cb1 / cb2) * toMl(v1, vu1);   // mL
+                    R.v2 = (cb1 / cb2) * toMl(v1, vu1);   
                     R.vu2 = 'mL_raw';
                 }
             }
-            // ---- 解「濃度」：一個濃度 + 兩個體積 ----
             else {
                 const v1_mL = toMl(v1, vu1), v2_mL = toMl(v2, vu2);
                 if (target === 'c2') {
@@ -567,7 +726,7 @@
                     const out = fromBasis(cb2, u2, type, mw);
                     if (out === null) { showError(needMwMsg()); return; }
                     R.c2 = out;
-                } else { // c1
+                } else { 
                     const type = basisType(u1, u2);
                     if (type === 'vv_cross') { showError(vvCrossMsg()); return; }
                     const cb2 = toBasis(c2, u2, type, mw);
@@ -579,11 +738,9 @@
                 }
             }
 
-            // ---- 此時四個值都齊了，統一驗證與呈現 ----
             const v1_mL = (R.vu1 === 'mL_raw') ? R.v1 : toMl(R.v1, R.vu1);
             const v2_mL = (R.vu2 === 'mL_raw') ? R.v2 : toMl(R.v2, R.vu2);
 
-            // 濃度大小檢查（不能濃縮）
             const type = basisType(R.u1, R.u2);
             const cbA = toBasis(R.c1, R.u1, type, mw);
             const cbB = toBasis(R.c2, R.u2, type, mw);
@@ -599,7 +756,6 @@
             const solvent_mL = v2_mL - v1_mL;
             const v1_uL = v1_mL * 1000;
 
-            // 顯示字串
             const c1Str = `${formatConc(R.c1)} ${displayUnit(R.u1)}`;
             const c2Str = `${formatConc(R.c2)} ${displayUnit(R.u2)}`;
             const v1Str = formatVolume(v1_mL);
@@ -608,7 +764,6 @@
 
             const solvedLabel = { c1: `C₁ = ${c1Str}`, v1: `V₁ = ${v1Str}`, c2: `C₂ = ${c2Str}`, v2: `V₂ = ${v2Str}` }[target];
 
-            // 取用體積過小警告
             let warningHtml = "";
             if (v1_uL < 1.0) {
                 warningHtml = `
@@ -618,8 +773,6 @@
                     </div>`;
             }
 
-            // 定容提示：v/v% 混合，或 stock 佔最終體積比例夠大時，體積不完全可加 → 建議定容。
-            // 高倍稀釋（stock 佔比很小）時影響可忽略，不顯示以保持乾淨。
             let precisionNote = "";
             const stockFraction = v1_mL / v2_mL;
             if (unitCategory(R.u1) === 'vv' || stockFraction >= 0.1) {
@@ -637,7 +790,7 @@
             `);
         }
 
-        /* ============ 固體配藥：質量 = 濃度 × 體積，填二空一 ============ */
+        /* ============ 固體配藥 ============ */
         function runSolid(mw) {
             const m  = val('mass'), mu = document.getElementById('mass_unit').value;
             const c2 = val('c2'),  c2u = document.getElementById('c2_unit').value;
@@ -661,7 +814,6 @@
                 }
             }
 
-            // 固體無法配製 v/v %
             if (c2u === 'v/v %') {
                 showError("<strong>Scientific Error:</strong> Solid powder cannot make a v/v % (volume/volume) solution. Use w/v %, a molar unit, or mg/mL.");
                 return;
@@ -673,15 +825,15 @@
             let computedMass = false;
 
             if (target === 'mass') {
-                const cmg = toMgPerMl(c2, c2u, mw);          // mg/mL
+                const cmg = toMgPerMl(c2, c2u, mw);          
                 if (cmg === null) { showError(needMwMsg()); return; }
                 R.m = cmg * toMl(v2, v2u); R.mu = 'mg_raw'; computedMass = true;
             } else if (target === 'v2') {
                 const cmg = toMgPerMl(c2, c2u, mw);
                 if (cmg === null) { showError(needMwMsg()); return; }
-                R.v2 = toMg(m, mu) / cmg; R.v2u = 'mL_raw';  // mL
-            } else { // 解 c2
-                const cmg = toMg(m, mu) / toMl(v2, v2u);     // mg/mL
+                R.v2 = toMg(m, mu) / cmg; R.v2u = 'mL_raw';  
+            } else { 
+                const cmg = toMg(m, mu) / toMl(v2, v2u);     
                 const out = fromBasis(cmg, c2u, 'mass', mw);
                 if (out === null) { showError(needMwMsg()); return; }
                 R.c2 = out;
@@ -724,14 +876,32 @@
             resultBox.style.display = 'block';
             resultBox.className = 'result-box';
             resultBox.innerHTML = html;
+            // 把結果轉成乾淨的純文字配方，供分享／貼進實驗記錄本
+            lastRecipeText = extractRecipeText();
         }
         function showError(msg) {
             resultBox.style.display = 'block';
             resultBox.className = 'result-box error-message';
             resultBox.innerHTML = `⚠️ ${msg}`;
+            lastRecipeText = null;   // 有錯誤就沒有可分享的配方
+        }
+
+        // 從結果卡抓出可讀的純文字（保留步驟編號，去掉警告框與註腳）
+        function extractRecipeText() {
+            const title = resultBox.querySelector('.result-title');
+            const head  = resultBox.querySelector('.headline');
+            const items = resultBox.querySelectorAll('.recipe-item');
+            const note  = resultBox.querySelector('.sub-note');
+            const lines = [];
+            lines.push('Huang Lab — ' + (title ? title.textContent.replace(/^[^\w]+/, '').trim() : 'Calculation'));
+            if (head) lines.push(head.textContent.trim());
+            items.forEach(el => lines.push(el.textContent.trim()));
+            if (note) lines.push(note.textContent.trim());
+            return lines.join('\n');
         }
 
         updateFields();
+        loadFromHash();   // 若網址帶著參數，開啟即自動填好並算出結果
     </script>
 </body>
 </html>
