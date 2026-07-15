@@ -316,16 +316,16 @@
         <div class="input-group" id="groupMW">
             <label for="mw">Molecular Weight (MW) <span style="font-weight:400; color:#a0aec0;">[Optional]</span></label>
             <div class="input-row">
-                <input type="number" id="mw" placeholder="e.g., 58.44" step="any" min="0">
+                <input type="number" id="mw" step="any" min="0">
                 <select disabled style="background:#edf2f7; color:#a0aec0; border-color:#edf2f7;"><option>g/mol</option></select>
             </div>
-            <div class="mw-hint">* Only needed when converting <strong>between</strong> molar units (M/mM/µM/nM) and mass units (w/v %, mg/mL, µg/mL).</div>
+            <div class="mw-hint" id="mwHint"></div>
         </div>
 
         <div class="input-group" id="groupC1">
             <label for="c1">Stock Concentration (C₁) <span class="badge" id="badge_c1">will solve</span></label>
             <div class="input-row">
-                <input type="number" id="c1" placeholder="e.g., 10" step="any" min="0">
+                <input type="number" id="c1" step="any" min="0">
                 <select id="c1_unit">
                     <option value="w/v %">w/v %</option>
                     <option value="v/v %">v/v %</option>
@@ -342,7 +342,7 @@
         <div class="input-group" id="groupV1">
             <label for="v1">Stock Volume (V₁) <span class="badge" id="badge_v1">will solve</span></label>
             <div class="input-row">
-                <input type="number" id="v1" placeholder="e.g., 20" step="any" min="0">
+                <input type="number" id="v1" step="any" min="0">
                 <select id="v1_unit">
                     <option value="L">L</option>
                     <option value="mL">mL</option>
@@ -354,7 +354,7 @@
         <div class="input-group" id="groupMass" style="display:none;">
             <label for="mass">Powder Mass (m) <span class="badge" id="badge_mass">will solve</span></label>
             <div class="input-row">
-                <input type="number" id="mass" placeholder="e.g., 5" step="any" min="0">
+                <input type="number" id="mass" step="any" min="0">
                 <select id="mass_unit">
                     <option value="g">g</option>
                     <option value="mg" selected>mg</option>
@@ -366,7 +366,7 @@
         <div class="input-group" id="groupC2">
             <label for="c2">Final Concentration (C₂) <span class="badge" id="badge_c2">will solve</span></label>
             <div class="input-row">
-                <input type="number" id="c2" placeholder="e.g., 50" step="any" min="0">
+                <input type="number" id="c2" step="any" min="0">
                 <select id="c2_unit">
                     <option value="w/v %">w/v %</option>
                     <option value="v/v %" id="c2opt_vv">v/v %</option>
@@ -383,7 +383,7 @@
         <div class="input-group" id="groupV2">
             <label for="v2">Final Volume (V₂) <span class="badge" id="badge_v2">will solve</span></label>
             <div class="input-row">
-                <input type="number" id="v2" placeholder="e.g., 2" step="any" min="0">
+                <input type="number" id="v2" step="any" min="0">
                 <select id="v2_unit">
                     <option value="L">L</option>
                     <option value="mL" selected>mL</option>
@@ -627,19 +627,22 @@
         function updateFields() {
             const vvOpt = document.getElementById('c2opt_vv');
             const c2sel = document.getElementById('c2_unit');
+            const mwHint = document.getElementById('mwHint');
             if (currentMode === 'dilution') {
                 solveHint.innerHTML = "Fill in any <strong>three</strong> — leave one blank and it's solved automatically.";
                 show('groupC1', true); show('groupV1', true); show('groupMass', false); show('groupC2', true); show('groupV2', true);
                 document.querySelector('#groupC2 label').firstChild.textContent = 'Final Concentration (C₂) ';
                 document.querySelector('#groupV2 label').firstChild.textContent = 'Final Volume (V₂) ';
-                vvOpt.hidden = false; vvOpt.disabled = false;   
-            } else { 
+                vvOpt.hidden = false; vvOpt.disabled = false;
+                mwHint.innerHTML = '* Only needed when converting <strong>between</strong> molar and mass units. Not required for molar → molar or mass → mass.';
+            } else {
                 solveHint.innerHTML = "Fill in any <strong>two</strong> — leave one blank and it's solved automatically.";
                 show('groupC1', false); show('groupV1', false); show('groupMass', true); show('groupC2', true); show('groupV2', true);
-                document.querySelector('#groupC2 label').firstChild.textContent = 'Concentration (C₂) ';
-                document.querySelector('#groupV2 label').firstChild.textContent = 'Solution Volume (V₂) ';
+                document.querySelector('#groupC2 label').firstChild.textContent = 'Concentration ';
+                document.querySelector('#groupV2 label').firstChild.textContent = 'Volume ';
                 if (c2sel.value === 'v/v %') c2sel.value = 'mg/mL';
                 vvOpt.hidden = true; vvOpt.disabled = true;
+                mwHint.innerHTML = '* Only needed when target concentration uses molar units (M/mM/µM/nM).';
             }
             solveHint.style.display = 'block';
             resultBox.style.display = 'none';
