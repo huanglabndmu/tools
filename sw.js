@@ -8,7 +8,7 @@
    更新工具後：只要把下面的 v1 改成 v2（v3、v4…）再推上去即可。
    ============================================================ */
 
-const CACHE_VERSION = 'huang-lab-v3';
+const CACHE_VERSION = 'huang-lab-v4';
 
 // 用相對路徑（相對於 sw.js 所在的目錄），不要用開頭的 "/"
 const PRECACHE_URLS = [
