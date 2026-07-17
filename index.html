@@ -35,48 +35,53 @@
             align-items: center;
         }
 
-        /* 🌟 極簡美學版：微光懸浮分享按鈕 */
-        .portal-share-btn {
+        /* 🌟 右上角控制區塊（Install + Share 並排） */
+        .top-actions {
             position: absolute;
-            top: -10px;                 /* 微調高度，跟標題對齊得更完美 */
+            top: -10px;
             right: 15px;
-            background: rgba(255, 255, 255, 0.4);   /* 更輕透的毛玻璃 */
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        /* 🌟 極簡美學版：共用按鈕樣式 */
+        .action-btn {
+            background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.8);
-            color: #4a5568;             /* 預設低調的莫蘭迪灰，不搶標題風頭 */
-            padding: 8px 18px;
+            color: #4a5568;             /* 預設低調莫蘭迪灰，不搶標題風頭 */
+            padding: 8px 16px;
             border-radius: 30px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            /* 🌟 魔法三：彈簧回彈曲線 */
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);  /* 彈簧果凍感 */
             display: flex;
             align-items: center;
             gap: 8px;
             letter-spacing: 0.5px;
         }
 
-        .portal-share-btn:hover {
+        .action-btn:hover {
             background: rgba(255, 255, 255, 0.95);
             transform: translateY(-4px);   /* 幅度加大，觸發果凍回彈 */
             box-shadow: 0 8px 20px rgba(43, 108, 176, 0.1);
-            color: #2b6cb0;             /* 游標滑過時才點亮專屬藍色 */
+            color: #2b6cb0;             /* 滑過才點亮專屬藍色 */
             border-color: rgba(43, 108, 176, 0.2);
         }
 
-        .portal-share-btn:active {
+        .action-btn:active {
             transform: translateY(1px);
         }
 
-        /* 圖示專屬的滑動微動畫 */
-        .portal-share-btn svg {
+        .action-btn svg {
             transition: transform 0.3s ease;
         }
 
-        .portal-share-btn:hover svg {
+        .action-btn:hover svg {
             transform: translateY(-2px);
         }
 
@@ -230,30 +235,59 @@
 
         /* 🌟 手機響應式微調：螢幕太小時，把分享按鈕挪到最上方置中，排版更優雅 */
         @media (max-width: 576px) {
-            .portal-share-btn {
+            .top-actions {
                 position: relative;
                 top: 0;
                 right: 0;
                 margin-bottom: 25px;
+                justify-content: center;
             }
             .lab-title {
                 padding-right: 0;
             }
         }
     </style>
+    <!-- ===== PWA ===== -->
+    <meta name="theme-color" content="#38b2ac">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lab Tools">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </head> 
 <body>
 
     <div class="portal-wrapper">
-        <!-- 極簡版分享按鈕入口 (SVG 向量線條圖示) -->
-        <button class="portal-share-btn" id="sharePortalBtn" title="Share Portal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                <polyline points="16 6 12 2 8 6"></polyline>
-                <line x1="12" y1="2" x2="12" y2="15"></line>
-            </svg>
-            Share
-        </button>
+        <!-- 右上角功能按鈕群組（Install + Share） -->
+        <div class="top-actions">
+            <!-- Install 按鈕（預設隱藏，由 JS 依裝置/狀態決定是否顯示） -->
+            <button class="action-btn" id="installBtn" title="Install App" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3v12"></path>
+                    <polyline points="8 11 12 15 16 11"></polyline>
+                    <path d="M5 21h14"></path>
+                </svg>
+                Install
+            </button>
+
+            <!-- Share 按鈕 -->
+            <button class="action-btn" id="sharePortalBtn" title="Share Portal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                    <polyline points="16 6 12 2 8 6"></polyline>
+                    <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                Share
+            </button>
+        </div>
 
         <div class="lab-title">Graduate Institute of Pharmacology, NDMU</div>
         <h1>Huang Lab Tools</h1>
@@ -287,6 +321,12 @@
     </div>
 
     <div id="portalToast" class="toast">✨ Portal link copied to clipboard!</div>
+
+    <!-- iOS 專屬安裝教學提示框 -->
+    <div id="iosInstallToast" class="toast" style="line-height: 1.7; text-align: center; padding: 16px 26px; max-width: 300px;">
+        📱 <strong>Add to Home Screen</strong><br>
+        Tap <span style="color:#90cdf4;">Share</span> in Safari's bar, then choose <strong>“Add to Home Screen”</strong>.
+    </div>
 
     <script>
         /* ============================================================
@@ -349,6 +389,85 @@
                 ok
             );
         });
+
+        /* ============================================================
+           智慧安裝按鈕 (PWA Install) — 修正版
+           修正重點：
+           1. 已安裝（standalone）→ 一律隱藏；並監聽變化即時更新
+           2. appinstalled 事件 → 裝完立刻隱藏
+           3. iOS 偵測涵蓋新版 iPad（UA 偽裝成 Mac 的觸控裝置）
+           4. Android 沒攔到事件時，仍給桌面書籤 fallback，不會沒反應
+           ============================================================ */
+        (function () {
+            const installBtn = document.getElementById('installBtn');
+            const iosToast = document.getElementById('iosInstallToast');
+            let deferredPrompt = null;
+
+            // 是否已用 App 模式（主畫面 icon）開啟
+            const isStandalone = () =>
+                window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true;
+
+            // iOS 偵測（含新版 iPadOS：UA 是 Mac 但有觸控）
+            const isIos = () => {
+                const ua = navigator.userAgent.toLowerCase();
+                const iphone = /iphone|ipod|ipad/.test(ua);
+                const ipadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+                return iphone || ipadOS;
+            };
+
+            const showToast = (html, ms) => {
+                if (html) iosToast.innerHTML = html;
+                iosToast.classList.add('show');
+                clearTimeout(showToast._t);
+                showToast._t = setTimeout(() => iosToast.classList.remove('show'), ms || 5000);
+            };
+
+            const hideInstall = () => { installBtn.style.display = 'none'; };
+            const showInstall = () => { if (!isStandalone()) installBtn.style.display = 'flex'; };
+
+            // 已是 App → 永遠隱藏，收工
+            if (isStandalone()) {
+                hideInstall();
+            } else {
+                // iOS 沒有安裝事件，直接顯示（點了給教學）
+                if (isIos()) showInstall();
+
+                // Android / Chrome：攔截原生安裝提示
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    showInstall();
+                });
+
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        deferredPrompt = null;
+                        if (outcome === 'accepted') hideInstall();
+                    } else if (isIos()) {
+                        showToast(
+                            '📱 <strong>Add to Home Screen</strong><br>Tap <span style="color:#90cdf4;">Share</span> in Safari\'s bar, then choose <strong>“Add to Home Screen”</strong>.',
+                            6000
+                        );
+                    } else {
+                        // 桌面瀏覽器等其他情況：給書籤提示
+                        showToast('💡 Use your browser menu → <strong>Install</strong>, or press <strong>Ctrl/Cmd + D</strong> to bookmark.', 5000);
+                    }
+                });
+            }
+
+            // 裝完的當下 → 立刻隱藏
+            window.addEventListener('appinstalled', () => {
+                deferredPrompt = null;
+                hideInstall();
+            });
+
+            // 若中途切換成 standalone（例如剛裝好從 App 開）→ 同步隱藏
+            const mq = window.matchMedia('(display-mode: standalone)');
+            if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) hideInstall(); });
+        })();
     </script>
 </body>
 </html>
