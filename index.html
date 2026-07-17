@@ -325,11 +325,8 @@
 
     <div id="portalToast" class="toast">✨ Portal link copied to clipboard!</div>
 
-    <!-- iOS 專屬安裝教學提示框 -->
-    <div id="iosInstallToast" class="toast" style="line-height: 1.7; text-align: center; padding: 16px 26px; max-width: 300px;">
-        📱 <strong>Add to Home Screen</strong><br>
-        Tap <span style="color:#90cdf4;">Share</span> in Safari's bar, then choose <strong>“Add to Home Screen”</strong>.
-    </div>
+    <!-- iOS 專屬安裝教學提示框（內容由 JS 於點擊時填入） -->
+    <div id="iosInstallToast" class="toast" style="text-align: center; max-width: 300px;"></div>
 
     <script>
         /* ============================================================
@@ -419,6 +416,13 @@
                 return iphone || ipadOS;
             };
 
+            // in-app 瀏覽器偵測（LINE / FB / IG / WeChat…）—— 這些內建瀏覽器
+            // 「不能」加入主畫面，所以不該顯示 Install 按鈕，以免給出錯誤指示
+            const isInAppBrowser = () => {
+                const ua = navigator.userAgent.toLowerCase();
+                return /line|fban|fbav|fbios|instagram|micromessenger|twitter|snapchat/.test(ua);
+            };
+
             const showToast = (html, ms) => {
                 if (html) iosToast.innerHTML = html;
                 iosToast.classList.add('show');
@@ -429,11 +433,24 @@
             const hideInstall = () => { installBtn.style.display = 'none'; };
             const showInstall = () => { if (!isStandalone()) installBtn.style.display = 'flex'; };
 
-            // 已是 App → 永遠隱藏，收工
+            // in-app 瀏覽器（LINE/FB/IG…）用哪個系統的說法
+            const inAppTip = () => {
+                if (isIos()) {
+                    // iOS 的 in-app 瀏覽器：右上「…」→ 用預設瀏覽器開啟
+                    return '🔒 In-app browsers can\'t install.<br>Tap the <strong>•••</strong> menu → <strong>“Open in browser”</strong>, then use Safari to add to Home Screen.';
+                }
+                return '🔒 In-app browsers can\'t install.<br>Tap the <strong>⋮</strong> menu → <strong>“Open in browser”</strong>, then install from Chrome.';
+            };
+
             if (isStandalone()) {
+                // 已是 App → 一律不顯示 Install
                 hideInstall();
+            } else if (isInAppBrowser()) {
+                // in-app 瀏覽器 → 仍顯示按鈕，但點了教他們用真正的瀏覽器開啟
+                showInstall();
+                installBtn.addEventListener('click', () => showToast(inAppTip(), 6500));
             } else {
-                // iOS 沒有安裝事件，直接顯示（點了給教學）
+                // iOS（真正的 Safari）沒有安裝事件，直接顯示（點了給教學）
                 if (isIos()) showInstall();
 
                 // Android / Chrome：攔截原生安裝提示
@@ -451,12 +468,11 @@
                         if (outcome === 'accepted') hideInstall();
                     } else if (isIos()) {
                         showToast(
-                            '📱 <strong>Add to Home Screen</strong><br>Tap <span style="color:#90cdf4;">Share</span> in Safari\'s bar, then choose <strong>“Add to Home Screen”</strong>.',
+                            '📱 Tap <span style="color:#90cdf4;">Share</span> in Safari, then <strong>“Add to Home Screen”</strong>',
                             6000
                         );
                     } else {
-                        // 桌面瀏覽器等其他情況：給書籤提示
-                        showToast('💡 Use your browser menu → <strong>Install</strong>, or press <strong>Ctrl/Cmd + D</strong> to bookmark.', 5000);
+                        showToast('💡 Use your browser menu → <strong>Install app</strong>', 5000);
                     }
                 });
             }
